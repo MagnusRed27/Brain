@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000" >
+<defs>
+  <linearGradient id="warn-g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffba2e"/>
+    <stop offset="45%" stop-color="#5fc36a"/>
+    <stop offset="100%" stop-color="#ff6f5e"/>
+  </linearGradient>
+  <radialGradient id="warn-r" cx="50%" cy="45%" r="70%">
+    <stop offset="0%" stop-color="#fffdf6" stop-opacity=".95"/>
+    <stop offset="45%" stop-color="#5fc36a" stop-opacity=".42"/>
+    <stop offset="100%" stop-color="#ffba2e" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="warn-glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .75 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="warn-soft" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="18"/>
+  </filter>
+  <pattern id="warn-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+    <path d="M64 0H0v64" fill="none" stroke="#ffba2e" stroke-opacity=".08" stroke-width="1"/>
+  </pattern>
+</defs>
+
+  <rect width="1500" height="1000" rx="52" fill="#fffdf6"/>
+  <rect width="1500" height="1000" fill="url(#warn-grid)"/>
+  <ellipse cx="750" cy="500" rx="560" ry="360" fill="url(#warn-r)" opacity=".75"/>
+  
+  <path d="M420 620 L1080 620" stroke="#ffba2e" stroke-width="18" stroke-linecap="round" opacity=".72"/>
+  <path d="M750 380 L710 620 L790 620 Z" fill="#ffffff" opacity=".6" stroke="#ffba2e" stroke-width="8"/>
+  <ellipse cx="560" cy="530" rx="150" ry="62" fill="#ffba2e" opacity=".28"/>
+  <ellipse cx="940" cy="500" rx="150" ry="62" fill="#ffba2e" opacity=".18"/>
+  <circle cx="750" cy="620" r="54" fill="#ffba2e" opacity=".72" filter="url(#warn-glow)"/>
+
+
+</svg>

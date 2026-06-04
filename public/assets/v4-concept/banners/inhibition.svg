@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500" >
+<defs>
+  <linearGradient id="b-inhibition-g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffba2e"/>
+    <stop offset="45%" stop-color="#5fc36a"/>
+    <stop offset="100%" stop-color="#ff6f5e"/>
+  </linearGradient>
+  <radialGradient id="b-inhibition-r" cx="50%" cy="45%" r="70%">
+    <stop offset="0%" stop-color="#fffdf6" stop-opacity=".95"/>
+    <stop offset="45%" stop-color="#5fc36a" stop-opacity=".42"/>
+    <stop offset="100%" stop-color="#ffba2e" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="b-inhibition-glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .75 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="b-inhibition-soft" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="18"/>
+  </filter>
+  <pattern id="b-inhibition-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+    <path d="M64 0H0v64" fill="none" stroke="#ffba2e" stroke-opacity=".08" stroke-width="1"/>
+  </pattern>
+</defs>
+<defs><linearGradient id="b-inhibition-fade" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#fffdf6" stop-opacity="0"/><stop offset="100%" stop-color="#fffdf6" stop-opacity=".92"/></linearGradient></defs>
+
+  <rect width="1500" height="500" rx="34" fill="#fffdf6"/>
+  <rect width="1500" height="500" fill="url(#b-inhibition-grid)"/>
+  <rect width="1500" height="500" fill="url(#b-inhibition-g)" opacity=".12"/>
+  <circle cx="420" cy="230" r="62" fill="#ff6f5e" opacity=".72" filter="url(#b-inhibition-glow)"/><path d="M420 116 V344" stroke="#ff6f5e" stroke-width="6" opacity=".28"/><ellipse cx="420" cy="356" rx="170" ry="26" fill="#ff6f5e" opacity=".12"/>
+  <rect x="900" y="0" width="600" height="500" fill="url(#b-inhibition-fade)"/>
+
+</svg>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" >
+<defs>
+  <linearGradient id="flow-g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffba2e"/>
+    <stop offset="45%" stop-color="#5fc36a"/>
+    <stop offset="100%" stop-color="#ff6f5e"/>
+  </linearGradient>
+  <radialGradient id="flow-r" cx="50%" cy="45%" r="70%">
+    <stop offset="0%" stop-color="#fffdf6" stop-opacity=".95"/>
+    <stop offset="45%" stop-color="#5fc36a" stop-opacity=".42"/>
+    <stop offset="100%" stop-color="#ffba2e" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="flow-glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .75 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="flow-soft" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="18"/>
+  </filter>
+  <pattern id="flow-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+    <path d="M64 0H0v64" fill="none" stroke="#ffba2e" stroke-opacity=".08" stroke-width="1"/>
+  </pattern>
+</defs>
+
+  <rect width="1200" height="900" rx="44" fill="#fffdf6"/>
+  <rect width="1200" height="900" fill="url(#flow-grid)"/>
+  <ellipse cx="300" cy="180" rx="340" ry="190" fill="#ffba2e" opacity=".14" filter="url(#flow-soft)"/>
+  <ellipse cx="870" cy="690" rx="390" ry="220" fill="#5fc36a" opacity=".15" filter="url(#flow-soft)"/>
+  
+  <path d="M120 570 C 320 260, 520 280, 620 450 S 860 680, 1080 330" fill="none" stroke="url(#flow-g)" stroke-width="82" stroke-linecap="round" filter="url(#flow-glow)"/>
+  <path d="M120 630 C 420 590, 770 650, 1080 585" fill="none" stroke="#ff7da6" stroke-width="5" stroke-opacity=".26"/>
+
+
+</svg>

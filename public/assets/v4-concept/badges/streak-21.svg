@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" >
+<defs>
+  <linearGradient id="badge-streak-21-g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ff7da6"/>
+    <stop offset="45%" stop-color="#ffffff"/>
+    <stop offset="100%" stop-color="#ff7da6"/>
+  </linearGradient>
+  <radialGradient id="badge-streak-21-r" cx="50%" cy="45%" r="70%">
+    <stop offset="0%" stop-color="#0d1117" stop-opacity=".95"/>
+    <stop offset="45%" stop-color="#ffffff" stop-opacity=".42"/>
+    <stop offset="100%" stop-color="#ff7da6" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="badge-streak-21-glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .75 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="badge-streak-21-soft" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="18"/>
+  </filter>
+  <pattern id="badge-streak-21-grid" width="64" height="64" patternUnits="userSpaceOnUse">
+    <path d="M64 0H0v64" fill="none" stroke="#ff7da6" stroke-opacity=".08" stroke-width="1"/>
+  </pattern>
+</defs>
+
+  <circle cx="256" cy="256" r="216" fill="#1b202a" opacity=".96"/>
+  <circle cx="256" cy="256" r="204" fill="#ffffff" fill-opacity=".08" stroke="#ff7da6" stroke-width="10" filter="url(#badge-streak-21-glow)"/>
+  <g stroke="#ff7da6" fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M170 310 C250 160 354 174 360 292 C314 260 256 268 170 310 Z"/><path d="M168 314 C246 344 312 338 372 288"/></g>
+
+</svg>
