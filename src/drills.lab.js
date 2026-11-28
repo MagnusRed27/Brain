@@ -1722,3 +1722,321 @@ export function runRuleHunt(ctx) {
   }
 }
 
+
+
+/* =========================================================================
+   NEW DRILL 1: Synapse Path (Проводник синапсов) — Animated Neural Path
+   ========================================================================= */
+export async function runSynapsePath(ctx) {
+  const state = ctx.getState();
+  const mode = "synpath";
+  const level = state.levels[mode] || 1;
+  const gridN = level >= 5 ? 5 : 4;
+  const totalRounds = 5;
+  const baseLen = Math.min(gridN * gridN - 2, 3 + Math.floor((level + 1) / 2));
+
+  renderDrillShell(ctx.refs, state, mode, `
+    <div class="synpath-board">
+      <div class="synpath-status" id="spStatus">Смотри на импульс…</div>
+      <div class="synpath-stage" id="spStage" style="--n:${gridN}">
+        <svg class="synpath-lines" id="spLines" viewBox="0 0 ${gridN * 100} ${gridN * 100}" aria-hidden="true"></svg>
+        <div class="synpath-grid" id="spGrid" style="grid-template-columns:repeat(${gridN}, 1fr)">
+          ${Array.from({ length: gridN * gridN }, (_, i) => `
+            <button type="button" class="sp-node" data-idx="${i}" aria-label="Узел ${i + 1}">
+              <span class="sp-node-core"></span>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      <div class="progress-track"><span id="taskProgress"></span></div>
+    </div>
+  `);
+
+  const statusEl = ctx.refs.arena.querySelector("#spStatus");
+  const linesSvg = ctx.refs.arena.querySelector("#spLines");
+  const nodes = [...ctx.refs.arena.querySelectorAll(".sp-node")];
+
+  let totalSteps = 0;
+  let correctSteps = 0;
+  let mistakes = 0;
+  let totalRt = 0;
+
+  function nodeCenter(idx) {
+    const r = Math.floor(idx / gridN);
+    const c = idx % gridN;
+    return { x: c * 100 + 50, y: r * 100 + 50 };
+  }
+
+  function neighbors(idx) {
+    const r = Math.floor(idx / gridN);
+    const c = idx % gridN;
+    const out = [];
+    for (let dr = -1; dr <= 1; dr += 1) {
+      for (let dc = -1; dc <= 1; dc += 1) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < gridN && nc >= 0 && nc < gridN) out.push(nr * gridN + nc);
+      }
+    }
+    return out;
+  }
+
+  function makePath(len) {
+    const path = [randomInt(0, gridN * gridN - 1)];
+    for (let i = 1; i < len; i += 1) {
+      const cur = path[path.length - 1];
+      const cands = neighbors(cur).filter((n) => !path.includes(n));
+      if (!cands.length) break;
+      path.push(cands[randomInt(0, cands.length - 1)]);
+    }
+    return path;
+  }
+
+  function drawEdges(pathIndices, cls = "is-demo") {
+    if (pathIndices.length < 2) { linesSvg.innerHTML = ""; return; }
+    let html = "";
+    for (let i = 1; i < pathIndices.length; i += 1) {
+      const a = nodeCenter(pathIndices[i - 1]);
+      const b = nodeCenter(pathIndices[i]);
+      html += `<line class="sp-edge ${cls}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" />`;
+    }
+    linesSvg.innerHTML = html;
+  }
+
+  function clearVisuals() {
+    linesSvg.innerHTML = "";
+    nodes.forEach((n) => n.classList.remove("is-lit", "is-hit", "is-miss", "is-done"));
+  }
+
+  try {
+    for (let round = 0; round < totalRounds; round += 1) {
+      if (!ctx.isCurrent()) return;
+      const len = Math.min(gridN * gridN - 2, baseLen + Math.floor(round / 2));
+      const path = makePath(len);
+      totalSteps += path.length;
+      clearVisuals();
+      nodes.forEach((n) => { n.disabled = true; });
+      statusEl.textContent = `Раунд ${round + 1}/${totalRounds} · Запомни маршрут (${path.length} узлов)`;
+      await sleepSignal(450, ctx.signal);
+
+      // Animate glowing energy pulse step by step
+      const shown = [];
+      for (let i = 0; i < path.length; i += 1) {
+        if (!ctx.isCurrent()) return;
+        const idx = path[i];
+        shown.push(idx);
+        nodes[idx].classList.add("is-lit");
+        drawEdges(shown, "is-demo");
+        ctx.sensory.cue("hit-soft");
+        await sleepSignal(Math.max(360, 620 - level * 25), ctx.signal);
+      }
+
+      await sleepSignal(350, ctx.signal);
+      clearVisuals();
+      statusEl.textContent = `Повтори траекторию кликами (${path.length} узлов)`;
+      nodes.forEach((n) => { n.disabled = false; });
+
+      // Wait for user reconstruction
+      const picked = [];
+      let stepStarted = performance.now();
+      await new Promise((resolve) => {
+        const onClick = (e) => {
+          const btn = e.currentTarget;
+          const idx = Number(btn.dataset.idx);
+          const expected = path[picked.length];
+          if (idx === expected) {
+            totalRt += performance.now() - stepStarted;
+            stepStarted = performance.now();
+            picked.push(idx);
+            correctSteps += 1;
+            btn.classList.add("is-hit");
+            drawEdges(picked, "is-user");
+            ctx.feedback(true, `${picked.length}/${path.length}`);
+            if (picked.length >= path.length) cleanup(true);
+          } else {
+            mistakes += 1;
+            btn.classList.add("is-miss");
+            ctx.feedback(false, "сбой траектории");
+            window.setTimeout(() => btn.classList.remove("is-miss"), 320);
+            if (mistakes >= totalRounds * 2) cleanup(false);
+          }
+        };
+        const cleanup = () => {
+          nodes.forEach((n) => {
+            n.removeEventListener("click", onClick);
+            n.disabled = true;
+          });
+          resolve();
+        };
+        nodes.forEach((n) => n.addEventListener("click", onClick));
+        ctx.signal.addEventListener("abort", cleanup, { once: true });
+      });
+
+      ctx.setProgress(((round + 1) / totalRounds) * 100);
+      await sleepSignal(380, ctx.signal);
+    }
+
+    const accuracy = totalSteps ? Math.max(0, Math.min(1, correctSteps / (totalSteps + mistakes * 0.5))) : 0;
+    const avgRt = correctSteps ? totalRt / correctSteps : 0;
+    const xp = Math.round(20 + accuracy * 40 + level * 3);
+    ctx.finish(makeResult(mode, accuracy, xp, mistakes, level, avgRt));
+  } catch (err) {
+    if (!isAbortError(err)) throw err;
+  }
+}
+
+/* =========================================================================
+   NEW DRILL 2: Quantum Pattern (Матричная логика Равена) — 100% Mouse Click
+   ========================================================================= */
+export async function runQuantumPattern(ctx) {
+  const state = ctx.getState();
+  const mode = "qpattern";
+  const level = state.levels[mode] || 1;
+  const totalTrials = 8;
+
+  renderDrillShell(ctx.refs, state, mode, `
+    <div class="qp-board">
+      <div class="qp-status" id="qpStatus">Найди закономерность в 3×3 матрице и выбери недостающую плитку</div>
+      <div class="qp-matrix" id="qpMatrix"></div>
+      <div class="qp-choices" id="qpChoices"></div>
+      <div class="progress-track"><span id="taskProgress"></span></div>
+    </div>
+  `);
+
+  const matrixEl = ctx.refs.arena.querySelector("#qpMatrix");
+  const choicesEl = ctx.refs.arena.querySelector("#qpChoices");
+  const statusEl = ctx.refs.arena.querySelector("#qpStatus");
+
+  const SHAPES = ["circle", "diamond", "triangle", "hex"];
+  const FILLS = ["outline", "soft", "solid"];
+  const COLORS = ["#22d3ee", "#818cf8", "#2dd4bf", "#f59e0b"];
+
+  function renderGlyph({ shape, fill, color, rot = 0, count = 1 }) {
+    const stroke = color;
+    const fillAttr = fill === "solid" ? color : fill === "soft" ? `${color}38` : "none";
+    const drawOne = (cx, cy, s) => {
+      const gStart = `<g transform="translate(${cx},${cy}) rotate(${rot})">`;
+      let el = "";
+      if (shape === "circle") el = `<circle cx="0" cy="0" r="${s}" fill="${fillAttr}" stroke="${stroke}" stroke-width="2.2"/>`;
+      else if (shape === "diamond") el = `<polygon points="0,${-s} ${s},0 0,${s} ${-s},0" fill="${fillAttr}" stroke="${stroke}" stroke-width="2.2"/>`;
+      else if (shape === "triangle") el = `<polygon points="0,${-s} ${s},${s * 0.85} ${-s},${s * 0.85}" fill="${fillAttr}" stroke="${stroke}" stroke-width="2.2"/>`;
+      else el = `<polygon points="${-s * 0.5},${-s * 0.86} ${s * 0.5},${-s * 0.86} ${s},0 ${s * 0.5},${s * 0.86} ${-s * 0.5},${s * 0.86} ${-s},0" fill="${fillAttr}" stroke="${stroke}" stroke-width="2.2"/>`;
+      return `${gStart}${el}</g>`;
+    };
+    const pts = count === 1 ? [[32, 32, 16]] : count === 2 ? [[20, 32, 11], [44, 32, 11]] : [[32, 18, 9], [19, 43, 9], [45, 43, 9]];
+    return `<svg class="qp-svg" viewBox="0 0 64 64" aria-hidden="true">${pts.map(([x, y, s]) => drawOne(x, y, s)).join("")}</svg>`;
+  }
+
+  function makeTrial() {
+    // Pick a clean progression rule: rows cycle shape/fill/count/rotation
+    const sShift = shuffle([0, 1, 2, 3]);
+    const cShift = shuffle([0, 1, 2, 3]);
+    const ruleType = randomInt(0, level >= 3 ? 2 : 1);
+    const grid = [];
+    for (let r = 0; r < 3; r += 1) {
+      for (let c = 0; c < 3; c += 1) {
+        if (ruleType === 0) {
+          grid.push({
+            shape: SHAPES[sShift[(r + c) % 3]],
+            fill: FILLS[r % 3],
+            color: COLORS[cShift[c % 3]],
+            rot: 0,
+            count: 1,
+          });
+        } else if (ruleType === 1) {
+          grid.push({
+            shape: SHAPES[sShift[r % 3]],
+            fill: FILLS[c % 3],
+            color: COLORS[cShift[(r + c) % 3]],
+            rot: ((r + c) % 4) * 90,
+            count: (c % 3) + 1,
+          });
+        } else {
+          grid.push({
+            shape: SHAPES[sShift[(r + c) % 4]],
+            fill: FILLS[(r + c) % 3],
+            color: COLORS[cShift[r % 3]],
+            rot: (c * 90) % 360,
+            count: ((r + c) % 3) + 1,
+          });
+        }
+      }
+    }
+    const answer = grid[8];
+    const keyOf = (g) => `${g.shape}|${g.fill}|${g.color}|${g.rot}|${g.count}`;
+    const used = new Set([keyOf(answer)]);
+    const distractors = [];
+    let guard = 0;
+    while (distractors.length < 3 && guard < 40) {
+      guard += 1;
+      const cand = {
+        shape: Math.random() < 0.5 ? answer.shape : SHAPES[randomInt(0, 3)],
+        fill: Math.random() < 0.5 ? answer.fill : FILLS[randomInt(0, 2)],
+        color: Math.random() < 0.5 ? answer.color : COLORS[randomInt(0, 3)],
+        rot: answer.rot,
+        count: Math.random() < 0.6 ? answer.count : randomInt(1, 3),
+      };
+      const k = keyOf(cand);
+      if (!used.has(k)) { used.add(k); distractors.push(cand); }
+    }
+    const options = shuffle([{ ...answer, correct: true }, ...distractors.map((d) => ({ ...d, correct: false }))]);
+    return { grid, options };
+  }
+
+  let correct = 0;
+  let mistakes = 0;
+  let totalRt = 0;
+
+  try {
+    for (let t = 0; t < totalTrials; t += 1) {
+      if (!ctx.isCurrent()) return;
+      const { grid, options } = makeTrial();
+      statusEl.textContent = `Матрица ${t + 1}/${totalTrials} · Выбери недостающий элемент`;
+      matrixEl.innerHTML = grid.map((cell, idx) =>
+        idx === 8
+          ? `<div class="qp-cell is-missing"><span>?</span></div>`
+          : `<div class="qp-cell">${renderGlyph(cell)}</div>`
+      ).join("");
+      choicesEl.innerHTML = options.map((opt, i) => `
+        <button type="button" class="qp-choice" data-correct="${opt.correct ? "1" : "0"}">
+          <span class="qp-idx">${i + 1}</span>
+          ${renderGlyph(opt)}
+        </button>
+      `).join("");
+
+      const startedAt = performance.now();
+      await new Promise((resolve) => {
+        const btns = [...choicesEl.querySelectorAll(".qp-choice")];
+        const onPick = (e) => {
+          const btn = e.currentTarget;
+          const ok = btn.dataset.correct === "1";
+          btns.forEach((b) => {
+            b.disabled = true;
+            if (b.dataset.correct === "1") b.classList.add("is-correct");
+          });
+          if (ok) {
+            correct += 1;
+            totalRt += performance.now() - startedAt;
+            ctx.feedback(true, "верная логика");
+          } else {
+            mistakes += 1;
+            btn.classList.add("is-wrong");
+            ctx.feedback(false, "другое правило");
+          }
+          window.setTimeout(resolve, 420);
+        };
+        btns.forEach((b) => b.addEventListener("click", onPick));
+        ctx.signal.addEventListener("abort", resolve, { once: true });
+      });
+      ctx.setProgress(((t + 1) / totalTrials) * 100);
+    }
+
+    const accuracy = correct / totalTrials;
+    const avgRt = correct ? totalRt / correct : 0;
+    const xp = Math.round(22 + accuracy * 42 + level * 3);
+    ctx.finish(makeResult(mode, accuracy, xp, mistakes, level, avgRt));
+  } catch (err) {
+    if (!isAbortError(err)) throw err;
+  }
+}

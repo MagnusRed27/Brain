@@ -1632,3 +1632,314 @@ body.is-ritual-home .page-content {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================================
+   INTERACTIVE ANATOMICAL BRAIN CABINET + SYNAPSE PATH + QUANTUM PATTERN
+   + WHAT/WHY DRILL BADGES
+   ========================================================================= */
+
+/* --- Brain Cabinet Atlas (#/progress) ------------------------------------ */
+.brain-cabinet-atlas {
+  padding: 24px 26px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-color: var(--line-strong) !important;
+  background:
+    radial-gradient(65% 75% at 20% 50%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+    var(--surface) !important;
+}
+
+.bca-rank-strip {
+  display: grid;
+  grid-template-columns: auto minmax(200px, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.bca-rank-left { display: flex; align-items: center; gap: 14px; }
+.bca-rank-emblem {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #041018;
+  font-family: var(--font-mono); font-size: 1.25rem; font-weight: 800;
+  display: grid; place-items: center;
+  box-shadow: 0 0 22px var(--accent-glow);
+}
+.bca-rank-left h3 { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; margin: 2px 0 0; color: var(--text); }
+
+.bca-rank-progress { display: flex; flex-direction: column; gap: 6px; }
+.bca-rp-meta { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+.bca-rp-meta strong { color: var(--accent); }
+.bca-rp-bar { height: 7px; border-radius: 999px; background: var(--surface-elev); overflow: hidden; border: 1px solid var(--line); }
+.bca-rp-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 600ms var(--ease-smooth); }
+
+.bca-rank-kpis { display: flex; gap: 12px; }
+.bca-rank-kpis > div {
+  padding: 8px 14px; border-radius: 12px; background: var(--surface-elev); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; min-width: 72px;
+}
+.bca-rank-kpis strong { font-family: var(--font-mono); font-size: 1.08rem; font-weight: 800; color: var(--text); }
+.bca-rank-kpis small { font-size: 0.64rem; color: var(--muted); }
+
+.bca-main-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.05fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.bca-brain-stage {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bca-stage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bca-focus-pill {
+  font-family: var(--font-mono); font-size: 0.64rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  border: 1px solid color-mix(in srgb, #f59e0b 45%, transparent);
+  color: #fbbf24;
+}
+
+.bca-brain-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.bca-lobe { cursor: pointer; outline: none; }
+.bca-lobe path {
+  fill: color-mix(in srgb, var(--accent) 10%, var(--surface-elev));
+  stroke: color-mix(in srgb, var(--accent) 42%, var(--line-strong));
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: all 220ms var(--ease-smooth);
+}
+.bca-lobe.is-weak path {
+  fill: color-mix(in srgb, #f59e0b 16%, var(--surface-elev));
+  stroke: #f59e0b;
+  animation: weakLobePulse 2.4s ease-in-out infinite;
+}
+.bca-lobe.is-strong path {
+  fill: color-mix(in srgb, #2dd4bf 16%, var(--surface-elev));
+  stroke: #2dd4bf;
+}
+.bca-lobe.is-selected path,
+.bca-lobe:hover path {
+  fill: color-mix(in srgb, var(--accent) 26%, var(--surface-elev));
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+@keyframes weakLobePulse { 0%, 100% { fill-opacity: 0.7; } 50% { fill-opacity: 1; } }
+
+.bca-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 1.5; }
+.bca-lobe.is-weak .bca-dot { fill: #fbbf24; }
+.bca-lobe.is-strong .bca-dot { fill: #2dd4bf; }
+.bca-lbl { font-family: var(--font-mono); font-size: 9px; font-weight: 700; fill: var(--text); letter-spacing: 0.08em; pointer-events: none; }
+.bca-val { font-family: var(--font-mono); font-size: 11px; font-weight: 800; fill: var(--accent); pointer-events: none; }
+.bca-lobe.is-weak .bca-val { fill: #fbbf24; }
+
+.bca-lobe-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.bca-lobe-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 7px 6px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--muted); cursor: pointer; transition: all 160ms ease;
+}
+.bca-lobe-tab span { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; }
+.bca-lobe-tab strong { font-family: var(--font-mono); font-size: 0.84rem; color: var(--text); }
+.bca-lobe-tab.is-active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); }
+.bca-lobe-tab.is-weak strong { color: #fbbf24; }
+
+.bca-inspector {
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: var(--surface-elev);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.bca-dos-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.bca-dos-head h4 { font-family: var(--font-display); font-size: 1.32rem; font-weight: 800; margin: 3px 0 2px; color: var(--text); }
+.bca-dos-role { margin: 0; font-size: 0.82rem; color: var(--muted); }
+.bca-dos-score { text-align: right; line-height: 1; }
+.bca-dos-score strong { font-family: var(--font-mono); font-size: 2rem; font-weight: 800; color: var(--accent); }
+.bca-dos-score small { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+.bca-status {
+  align-self: flex-start; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);
+}
+.bca-status.is-weak { background: color-mix(in srgb, #f59e0b 16%, transparent); color: #fbbf24; }
+.bca-status.is-strong { background: color-mix(in srgb, #2dd4bf 16%, transparent); color: #2dd4bf; }
+
+.bca-dos-bar { height: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; }
+.bca-dos-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 400ms ease; }
+.bca-dos-why p { margin: 4px 0 0; font-size: 0.85rem; line-height: 1.54; color: var(--text-soft); }
+.bca-dos-tips { display: flex; flex-direction: column; gap: 6px; }
+.bca-dos-drills { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; margin-top: auto; border-top: 1px solid var(--line); }
+.bca-drill-go { padding: 8px 14px !important; font-size: 0.78rem !important; border-radius: 999px !important; }
+
+/* --- Drill Card What/Why Badges ------------------------------------------ */
+.sdc-lobe {
+  font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700;
+  color: var(--accent-2); padding: 2px 7px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sdc-why {
+  margin-top: 8px; padding: 7px 9px; border-radius: 8px;
+  background: var(--surface-elev); border-left: 2px solid var(--accent);
+  font-size: 0.73rem; line-height: 1.4; color: var(--text-soft);
+}
+.sdc-why span { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; color: var(--accent); margin-right: 4px; }
+.studio-drill-grid[data-density="compact"] .sdc-why,
+.studio-drill-grid[data-density="compact"] .sdc-lobe { display: none !important; }
+
+/* --- New Drill 1: Synapse Path Visuals ----------------------------------- */
+.synpath-board { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.synpath-status { font-family: var(--font-display); font-size: 0.96rem; font-weight: 700; color: var(--accent); }
+.synpath-stage { position: relative; width: min(360px, 86vw); aspect-ratio: 1; }
+.synpath-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.sp-edge { stroke: var(--accent); stroke-width: 5; stroke-linecap: round; opacity: 0.85; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+.sp-edge.is-user { stroke: #2dd4bf; }
+.synpath-grid { position: relative; z-index: 2; display: grid; gap: 12px; width: 100%; height: 100%; }
+.sp-node {
+  border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface-elev);
+  display: grid; place-items: center; cursor: pointer; transition: all 180ms var(--ease-smooth);
+}
+.sp-node-core { width: 18px; height: 18px; border-radius: 999px; background: var(--line-strong); transition: all 180ms ease; }
+@media (hover: hover) { .sp-node:not(:disabled):hover { border-color: var(--accent); transform: scale(1.04); } }
+.sp-node.is-lit, .sp-node.is-hit {
+  border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, var(--surface));
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+.sp-node.is-lit .sp-node-core, .sp-node.is-hit .sp-node-core { background: var(--accent); transform: scale(1.35); box-shadow: 0 0 14px var(--accent); }
+.sp-node.is-miss { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 20%, var(--surface)); }
+
+/* --- New Drill 2: Quantum Pattern (3x3 Raven Matrix) --------------------- */
+.qp-board { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; }
+.qp-status { font-family: var(--font-display); font-size: 0.94rem; font-weight: 700; color: var(--text-soft); text-align: center; }
+.qp-matrix { display: grid; grid-template-columns: repeat(3, 86px); gap: 10px; }
+.qp-cell {
+  width: 86px; height: 86px; border-radius: 14px; border: 1px solid var(--line-strong);
+  background: var(--surface-elev); display: grid; place-items: center;
+}
+.qp-cell.is-missing {
+  border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  font-family: var(--font-mono); font-size: 1.8rem; font-weight: 800; color: var(--accent);
+}
+.qp-svg { width: 64px; height: 64px; }
+.qp-choices { display: grid; grid-template-columns: repeat(4, 86px); gap: 12px; }
+.qp-choice {
+  position: relative; width: 86px; height: 86px; border-radius: 14px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  display: grid; place-items: center; cursor: pointer; transition: all 160ms var(--ease-smooth);
+}
+.qp-idx { position: absolute; top: 5px; left: 7px; font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); }
+@media (hover: hover) { .qp-choice:not(:disabled):hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 20px var(--accent-glow); } }
+.qp-choice.is-correct { border-color: var(--success); background: color-mix(in srgb, var(--success) 16%, var(--surface)); }
+.qp-choice.is-wrong { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+
+@media (max-width: 960px) {
+  .bca-rank-strip { grid-template-columns: 1fr; }
+  .bca-main-grid { grid-template-columns: 1fr; }
+}
+
+/* === Result Gauge & Brain Impact Strip ================================== */
+.result-gauge-wrap {
+  position: relative;
+  width: 122px;
+  height: 122px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.result-gauge-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.rg-track {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 7;
+}
+.rg-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 800ms var(--ease-smooth);
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+.result-gauge-wrap[data-status="good"] .rg-fill { stroke: var(--success); }
+.result-gauge-wrap[data-status="warn"] .rg-fill { stroke: var(--warn); }
+.result-gauge-wrap[data-status="bad"] .rg-fill { stroke: var(--danger); }
+.result-gauge-wrap .result-big-number {
+  font-size: 2.1rem !important;
+  line-height: 1;
+}
+.result-brain-impact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  margin: 14px 0;
+}
+.rbi-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rbi-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+.rbi-lobe {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.rbi-why {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rbi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rbi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-elev);
+  border: 1px solid var(--line-strong);
+  font-size: 0.76rem;
+}
+.rbi-chip strong { color: var(--text-soft); font-weight: 600; }
+.rbi-chip em { font-style: normal; font-family: var(--font-mono); font-weight: 700; color: var(--success); }

@@ -56,6 +56,8 @@ export const DEFAULT_LEVELS = {
   dsst: 1,
   evault: 1,
   rulehunt: 1,
+  synpath: 1,
+  qpattern: 1,
 };
 
 export const DEFAULT_CARDS = [
@@ -347,9 +349,27 @@ export const MODE_META = {
     objective: "Разгадывай секретное правило сортировки карт. Будь начеку: правило постоянно меняется!",
     domainWeights: { logic: 1, focus: 0.6, wm: 0.4 },
   },
+  synpath: {
+    title: "Synapse Path",
+    kicker: "синаптический маршрут",
+    code: "SN",
+    accent: COLORS.cyan,
+    glow: "rgba(34, 211, 238, 0.26)",
+    objective: "Запомни светящийся импульс по узлам нейросети и точно восстанови траекторию кликами мыши.",
+    domainWeights: { wm: 1, spatial: 0.85, focus: 0.4 },
+  },
+  qpattern: {
+    title: "Quantum Pattern",
+    kicker: "матричная логика",
+    code: "QP",
+    accent: COLORS.violet,
+    glow: "rgba(129, 140, 248, 0.26)",
+    objective: "Найди скрытое правило в геометрической 3×3 матрице (как тест Равена) и выбери недостающую фигуру.",
+    domainWeights: { logic: 1, spatial: 0.75, wm: 0.35 },
+  },
 };
 
-export const DRILL_IDS = ["nback", "grid", "focus", "logic", "recall", "scan", "rotate", "reaction", "trail", "stroop", "anback", "math", "schulte", "antisaccade", "rsvp", "stopsig", "flanker", "bspan", "vfluency", "tower", "dsst", "evault", "rulehunt"];
+export const DRILL_IDS = ["nback", "grid", "focus", "logic", "recall", "scan", "rotate", "reaction", "trail", "stroop", "anback", "math", "schulte", "antisaccade", "rsvp", "stopsig", "flanker", "bspan", "vfluency", "tower", "dsst", "evault", "rulehunt", "synpath", "qpattern"];
 
 export const DEFAULT_SETTINGS = {
   reducedMotion: false,
@@ -357,7 +377,7 @@ export const DEFAULT_SETTINGS = {
   hapticsEnabled: true,
   sessionLength: 18,
   visualIntensity: "balanced",
-  theme: "aurora",
+  theme: "obsidian",
   masterVolume: 0.7,
   sfxVolume: 0.8,
   musicEnabled: true,

@@ -1335,7 +1335,7 @@ export function renderPageDrills(refs, state, handlers) {
   refs.arena.innerHTML = `
     <section class="drills-command-panel studio-drills-head">
       <div class="sdh-main">
-        <span class="st-label">КАТАЛОГ / ${DRILL_IDS.length} КОГНИТИВНЫХ МОДУЛЯ</span>
+        <span class="st-label">КАТАЛОГ / ${DRILL_IDS.length} КОГНИТИВНЫХ МОДУЛЕЙ</span>
         <h3>${primeMeta?.title || "Персональный стек"}</h3>
         <p>${primeMeta?.objective || "Собери свой набор модулей и запускай без лишних переходов."}</p>
         <div class="panel-actions">
@@ -1428,18 +1428,20 @@ export function renderPageDrills(refs, state, handlers) {
       const brief = getModeBrief(state, id);
       const mastery = getDrillMastery(state, id);
       const isFavorite = favorites.has(id);
+      const brainTag = getDrillBrainTag(id);
       return `
         <button class="drill-card studio-drill-card ${isFavorite ? "is-favorite" : ""}" type="button" data-mode="${id}" style="--i:${i}">
           <div class="sdc-top">
             <div class="sdc-ids">
               <span class="sdc-code">${meta.code}</span>
-              <span class="sdc-kicker">${meta.kicker}</span>
+              <span class="sdc-lobe">${escapeHtml(brainTag.lobe)}</span>
             </div>
             <span class="drill-fav-toggle ${isFavorite ? "is-on" : ""}" role="button" tabindex="0" data-favorite-mode="${id}" aria-label="${isFavorite ? "Убрать из избранного" : "Добавить в избранное"}">${isFavorite ? "★" : "☆"}</span>
           </div>
           <div class="sdc-body">
             <h4>${meta.title}</h4>
             <p class="drill-card-objective" title="${escapeHtml(meta.objective || '')}">${meta.objective || ""}</p>
+            <div class="sdc-why"><span>ЗАЧЕМ:</span> ${escapeHtml(brainTag.why)}</div>
           </div>
           <div class="sdc-foot">
             <div class="sdc-pills">
@@ -1539,140 +1541,294 @@ function syncDrillToolbar(refs, view) {
   });
 }
 
-function renderDevelopmentCabinet(state, model, coach, recommended) {
-  const domains = state.domains || {};
-  const sorted = DOMAINS.map((d) => ({
-    ...d,
-    score: Math.round(domains[d.id] ?? 40),
-  })).sort((a, b) => b.score - a.score);
+const DRILL_BRAIN_INFO = {
+  nback:       { lobe: "PFC · Префронтальная", why: "Удерживать больше контекста и задач в уме одновременно" },
+  anback:      { lobe: "PFC · Слуховая РП",    why: "Лучше запоминать на слух на встречах и лекциях" },
+  synpath:     { lobe: "PFC + Теменная",       why: "Восстанавливать сложные траектории и пространственные схемы" },
+  qpattern:    { lobe: "PFC · Флюидный IQ",    why: "Быстрее находить скрытые закономерности в новых задачах" },
+  grid:        { lobe: "Теменная кора",        why: "Усиливать зрительно-пространственную память" },
+  bspan:       { lobe: "PFC · Манипуляция",    why: "Свободно оперировать данными в уме в обратном порядке" },
+  recall:      { lobe: "Гиппокамп · FSRS-5",   why: "Переводить знания и факты в долговременную память навсегда" },
+  evault:      { lobe: "Гиппокамп · Эпизоды",  why: "Не терять информацию даже при сильных отвлечениях" },
+  stroop:      { lobe: "ACC · Контроль",       why: "Подавлять автоматические импульсы и сохранять ясность" },
+  stopsig:     { lobe: "ACC · Торможение",     why: "Вовремя останавливать ошибочные действия под давлением" },
+  flanker:     { lobe: "ACC · Фильтрация",     why: "Игнорировать визуальный шум и держать целевой фокус" },
+  antisaccade: { lobe: "PFC + Глазодвигательная", why: "Управлять вниманием вопреки ярким отвлекающим стимулам" },
+  focus:       { lobe: "ACC · Переключение",   why: "Переключаться между правилами без потери темпа" },
+  trail:       { lobe: "PFC · Гибкость",       why: "Быстро чередовать разнородные потоки информации" },
+  logic:       { lobe: "PFC · Аналитика",      why: "Выявлять правила в числах и абстрактных структурах" },
+  tower:       { lobe: "PFC · Планирование",   why: "Просчитывать многошаговые решения наперёд" },
+  rulehunt:    { lobe: "PFC · Адаптивность",   why: "Вовремя отбрасывать устаревшие гипотезы и перестраиваться" },
+  math:        { lobe: "Теменная + PFC",       why: "Уверенно считать и оценивать цифры под дефицитом времени" },
+  reaction:    { lobe: "Моторная сеть",        why: "Ускорять базовый нейронный отклик и тонус внимания" },
+  dsst:        { lobe: "Моторная + Скорость",  why: "Поднимать темп обработки символов без просадки точности" },
+  scan:        { lobe: "Теменная · Поиск",     why: "Мгновенно находить нужные сигналы в большом объёме данных" },
+  schulte:     { lobe: "Теменная · Поле зрения", why: "Расширять периферийное внимание и скорость чтения" },
+  rsvp:        { lobe: "Височно-теменная",     why: "Удерживать смысл текста при высокой скорости потока" },
+  vfluency:    { lobe: "Височная · Лексикон",  why: "Ускорять семантический поиск и точность формулировок" },
+  rotate:      { lobe: "Теменная · 3D-образы", why: "Мысленно вращать и сопоставлять геометрические модели" },
+};
 
-  const strongest = sorted[0];
-  const weakest = sorted[sorted.length - 1];
-  const history = state.history || [];
-  const recent = history.slice(-12);
-  const avgAcc = recent.length ? Math.round((recent.reduce((s, r) => s + (r.accuracy || 0), 0) / recent.length) * 100) : null;
-  const rts = recent.filter((r) => r.rt && r.rt > 0 && r.rt < 15000).map((r) => r.rt);
-  const avgRt = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : null;
+function getDrillBrainTag(id) {
+  return DRILL_BRAIN_INFO[id] || { lobe: "Нейросеть", why: "Комплексная тренировка когнитивного контроля" };
+}
 
-  const DOMAIN_ADVICE = {
-    wm: {
-      title: "Рабочая память — главный рычаг",
-      steps: [
-        "3 раза в неделю по 1 раунду Dual N-back или Backwards Span на границе сложности (цель 75–85%).",
-        "Держи в голове 3–4 пункта без записи перед тем, как перенести их в заметки.",
-        "Сон < 7 часов бьёт по рабочей памяти сильнее всего — в такие дни переключайся на Recall Vault.",
+function getNeuroRank(totalXp = 0) {
+  const ranks = [
+    { tier: "I",   name: "Инициация",  min: 0,    next: 250 },
+    { tier: "II",  name: "Адаптация",  min: 250,  next: 750 },
+    { tier: "III", name: "Синергия",   min: 750,  next: 1800 },
+    { tier: "IV",  name: "Мастерство", min: 1800, next: 3600 },
+    { tier: "V",   name: "Нейропик",   min: 3600, next: 6000 },
+  ];
+  const cur = [...ranks].reverse().find((r) => totalXp >= r.min) || ranks[0];
+  const pct = cur.next > cur.min ? Math.min(100, Math.round(((totalXp - cur.min) / (cur.next - cur.min)) * 100)) : 100;
+  return { ...cur, pct, remaining: Math.max(0, cur.next - totalXp) };
+}
+
+function getCabinetLobes(state) {
+  const d = state.domains || {};
+  const s = {
+    wm: Math.round(d.wm ?? 38),
+    logic: Math.round(d.logic ?? 40),
+    focus: Math.round(d.focus ?? 44),
+    memory: Math.round(d.memory ?? 42),
+    speed: Math.round(d.speed ?? 43),
+    spatial: Math.round(d.spatial ?? 39),
+  };
+  return [
+    {
+      id: "pfc",
+      code: "PFC",
+      name: "Префронтальная кора",
+      role: "Рабочая память, логика и планирование",
+      score: Math.round((s.wm + s.logic) / 2),
+      why: "Главный «дирижёр» интеллекта: удерживает контекст сложных задач, помогает думать на несколько шагов вперёд и принимать взвешенные решения.",
+      tips: [
+        "Делай 1 раунд Synapse Path или Dual N-back 3 раза в неделю на границе сложности.",
+        "В Quantum Pattern и Tower of London сначала формулируй правило целиком, потом кликай.",
+        "Сон менее 7 часов снижает эффективность PFC на 20–30% — в такие дни снижай нагрузку.",
       ],
-      drills: ["nback", "bspan", "grid"],
+      drills: ["synpath", "qpattern", "nback"],
     },
-    memory: {
-      title: "Долговременная память и FSRS-5",
-      steps: [
-        "Сохраняй интересные факты из вкладки «Знания» в FSRS-5 и закрывай повторы до сна.",
-        "Используй активное вспоминание без подсказки: усилие извлечения закрепляет след вдвое сильнее чтения.",
-        "Раз в неделю проходи Episodic Vault — он тренирует устойчивость к помехам.",
-      ],
-      drills: ["recall", "evault", "grid"],
-    },
-    focus: {
-      title: "Устойчивое внимание и тормозной контроль",
-      steps: [
-        "Начинай рабочее утро с 3-минутного спринта: Stroop Plus + Stop Signal убирают импульсивные клики.",
-        "Если точность ниже 75%, замедли отклик на 100–150 мс — сначала чистота, потом скорость.",
-        "Убирай уведомления блоками по 25–40 минут: переключение контекста стоит 15–20% ресурса.",
+    {
+      id: "acc",
+      code: "ACC",
+      name: "Передняя поясная кора",
+      role: "Внимание, самоконтроль и анти-импульсивность",
+      score: Math.round((s.focus * 0.75 + s.speed * 0.25)),
+      why: "Отвечает за фильтрацию отвлечений, торможение импульсивных кликов и удержание глубокого фокуса в шумной среде.",
+      tips: [
+        "Утренний спринт Stroop Plus + Stop Signal быстро «собирает» внимание перед работой.",
+        "При точности < 75% сознательно добавь паузу 120 мс перед ответом — чистота важнее спешки.",
+        "Практикуй блоки глубокой работы по 30 минут без переключения вкладок.",
       ],
       drills: ["stroop", "stopsig", "flanker"],
     },
-    logic: {
-      title: "Аналитика, правила и планирование",
-      steps: [
-        "В Tower of London и Logic Forge делай паузу 3 секунды перед первым ходом — планируй целиком.",
-        "Rule Hunt тренирует когнитивную гибкость: умение вовремя отбросить старую гипотезу.",
-        "Комбинируй логику с карточками по математике (теорема Байеса, энтропия) во вкладке «Знания».",
+    {
+      id: "parietal",
+      code: "PAR",
+      name: "Теменная кора",
+      role: "Пространственные образы, схемы и периферийный фокус",
+      score: Math.round((s.spatial * 0.7 + s.focus * 0.3)),
+      why: "Строит ментальные 3D-карты, помогает мгновенно схватывать структуры, графики, архитектуру и ускоряет визуальный поиск.",
+      tips: [
+        "Rotation Lab и Synapse Path напрямую нагружают теменно-лобную пространственную сеть.",
+        "В Schulte Table удерживай взгляд строго в центре таблицы — тренируй периферийное поле.",
+        "При изучении сложных тем рисуй схемы и привязывай идеи к пространству.",
       ],
-      drills: ["tower", "logic", "rulehunt"],
+      drills: ["rotate", "synpath", "schulte"],
     },
-    speed: {
-      title: "Скорость обработки и ритм",
-      steps: [
-        "Короткие сессии Reaction Rail и Digit-Symbol утром разгоняют скорость обработки без усталости.",
-        "Следи за стабильностью RT: ровный темп без провалов важнее одного случайного рекорда.",
-        "Лёгкая физическая разминка за 10 минут до сессии ускоряет реакцию на 8–12%.",
+    {
+      id: "hippo",
+      code: "HIP",
+      name: "Гиппокамп и височная доля",
+      role: "Долговременная память, знания и консолидация",
+      score: s.memory,
+      why: "Переводит новые факты, термины и идеи из кратковременной памяти в прочные долговременные нейронные следы.",
+      tips: [
+        "Сохраняй стикеры из вкладки «Знания» в FSRS-5 и закрывай повторы вечером за 30 минут до сна.",
+        "Активное вспоминание в Recall Vault в 2 раза эффективнее пассивного перечитывания.",
+        "Раз в неделю проходи Episodic Vault для тренировки устойчивости памяти к помехам.",
       ],
-      drills: ["reaction", "dsst", "scan"],
+      drills: ["recall", "evault", "vfluency"],
     },
-    spatial: {
-      title: "Пространственное и образное мышление",
-      steps: [
-        "Rotation Lab и Memory Grid развивают мысленное вращение и визуальную карту пространства.",
-        "При запоминании абстрактных концепций привязывай их к визуальным схемам или маршрутам.",
-        "Тренируй Schulte Table с фокусом взгляда строго в центре — это расширяет периферийное поле.",
+    {
+      id: "motor",
+      code: "SPD",
+      name: "Сенсомоторная сеть",
+      role: "Скорость обработки и нейронный темп",
+      score: s.speed,
+      why: "Определяет быстроту реакции, беглость обработки символов и ровный, стабильный когнитивный ритм без провалов.",
+      tips: [
+        "Короткий разогрев Reaction Rail + Digit-Symbol утром ускоряет темп без перегрузки.",
+        "Целься в стабильность времени отклика (малый разброс RT), а не в один случайный рекорд.",
+        "10 минут активного движения перед работой ускоряют сенсомоторную реакцию на 8–12%.",
       ],
-      drills: ["rotate", "grid", "schulte"],
+      drills: ["reaction", "dsst", "math"],
     },
-  };
+  ];
+}
 
-  const plan = DOMAIN_ADVICE[weakest.id] || DOMAIN_ADVICE.wm;
-  const paceTip = avgAcc === null
-    ? "Пройди 3–5 раундов в разных модулях — система вычислит твой профиль скорости и точности."
-    : avgAcc >= 86
-      ? `Средняя точность ${avgAcc}% — отличный контроль. Смело ускоряй темп и поднимай уровень сложности.`
-      : avgAcc >= 70
-        ? `Точность ${avgAcc}% — идеальная зона нейропластичности (70–85%). Продолжай в этом темпе.`
-        : `Точность ${avgAcc}% — много импульсивных ошибок. Притормози на 150 мс перед кликом, чтобы стабилизировать базу.`;
+function renderDevelopmentCabinet(state, model, coach, recommended) {
+  const lobes = getCabinetLobes(state);
+
+  const sortedLobes = [...lobes].sort((a, b) => a.score - b.score);
+  const weakestLobe = sortedLobes[0];
+  const strongestLobe = sortedLobes[sortedLobes.length - 1];
+  const rank = getNeuroRank(state.profile?.totalXp || 0);
+  const history = state.history || [];
+  const recent = history.slice(-12);
+  const avgAcc = recent.length ? Math.round((recent.reduce((acc, r) => acc + (r.accuracy || 0), 0) / recent.length) * 100) : null;
 
   return `
-    <section class="dev-roadmap-card progress-panel-v8" data-progress-view="overview" style="grid-column: 1 / -1">
-      <div class="drc-header">
-        <div>
-          <span class="st-label">КАБИНЕТ РАЗВИТИЯ · ПЕРСОНАЛЬНЫЙ АНАЛИЗ</span>
-          <h3>Диагностика мозга и советы по прокачке</h3>
+    <section class="brain-cabinet-atlas progress-panel-v8" data-progress-view="overview" style="grid-column: 1 / -1" id="brainCabinetAtlas">
+      <!-- Top Neuro-Rank Progression Strip -->
+      <div class="bca-rank-strip">
+        <div class="bca-rank-left">
+          <span class="bca-rank-emblem">${rank.tier}</span>
+          <div>
+            <span class="st-label">СИСТЕМА РАЗВИТИЯ · НЕЙРО-РАНГ</span>
+            <h3>Ранг ${rank.tier} · ${rank.name}</h3>
+          </div>
         </div>
-        <div class="drc-badges">
-          <span class="rs-badge">ИНДЕКС ${model.overall}</span>
-          ${avgAcc !== null ? `<span class="drc-pill">ТОЧНОСТЬ ${avgAcc}%</span>` : ""}
-          ${avgRt !== null ? `<span class="drc-pill">СРЕДНИЙ RT ${avgRt} мс</span>` : ""}
+        <div class="bca-rank-progress">
+          <div class="bca-rp-meta">
+            <span>${state.profile?.totalXp || 0} XP</span>
+            <span>до следующего ранга: <strong>${rank.remaining} XP</strong></span>
+          </div>
+          <div class="bca-rp-bar"><span style="width:${rank.pct}%"></span></div>
+        </div>
+        <div class="bca-rank-kpis">
+          <div><strong>${model.overall}</strong><small>индекс</small></div>
+          <div><strong>${avgAcc !== null ? avgAcc + "%" : "—"}</strong><small>точность</small></div>
+          <div><strong>${state.profile?.streakDays || 0}д</strong><small>серия</small></div>
         </div>
       </div>
 
-      <div class="drc-grid">
-        <div class="drc-col drc-diagnosis">
-          <div class="drc-mini-cards">
-            <div class="drc-mini is-strong">
-              <span>СИЛЬНАЯ СТОРОНА</span>
-              <strong>${strongest.label} · ${strongest.score}</strong>
-              <small>Твоя опора — используй в сложных задачах</small>
-            </div>
-            <div class="drc-mini is-weak">
-              <span>ГЛАВНАЯ ТОЧКА РОСТА</span>
-              <strong>${weakest.label} · ${weakest.score}</strong>
-              <small>Даст максимальный прирост Нейроиндекса</small>
-            </div>
+      <!-- Interactive Anatomical Brain Atlas + Lobe Inspector -->
+      <div class="bca-main-grid">
+        <div class="bca-brain-stage">
+          <div class="bca-stage-head">
+            <span class="st-label">АНАТОМИЧЕСКИЙ АТЛАС · КЛИКНИ ПО ОТДЕЛУ</span>
+            <span class="bca-focus-pill">УПОР: ${weakestLobe.code} · ${weakestLobe.score}</span>
           </div>
 
-          <div class="drc-pace-box">
-            <span class="st-label">ДИАГНОСТИКА ТЕМПА И ОШИБОК</span>
-            <p>${paceTip}</p>
+          <svg class="bca-brain-svg" viewBox="0 0 360 250" role="img" aria-label="Интерактивная карта 5 отделов мозга">
+            <defs>
+              <radialGradient id="cabAura" cx="50%" cy="48%" r="52%">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.20"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <ellipse cx="180" cy="122" rx="158" ry="102" fill="url(#cabAura)"/>
+            <circle cx="180" cy="122" r="92" fill="none" stroke="var(--accent)" stroke-opacity="0.10" stroke-dasharray="2 5"/>
+
+            <!-- 1. Prefrontal Cortex (Front-Left) -->
+            <g class="bca-lobe ${weakestLobe.id === "pfc" ? "is-weak" : strongestLobe.id === "pfc" ? "is-strong" : ""} is-selected" data-lobe="pfc" tabindex="0" role="button">
+              <path d="M72 152 C54 134 52 96 74 68 C94 42 128 32 162 36 L156 116 L96 156 Z" />
+              <circle class="bca-dot" cx="106" cy="88" r="5" />
+              <text x="106" y="74" text-anchor="middle" class="bca-lbl">PFC</text>
+              <text x="106" y="108" text-anchor="middle" class="bca-val">${lobes[0].score}</text>
+            </g>
+
+            <!-- 2. Parietal Lobe (Top-Back) -->
+            <g class="bca-lobe ${weakestLobe.id === "parietal" ? "is-weak" : strongestLobe.id === "parietal" ? "is-strong" : ""}" data-lobe="parietal" tabindex="0" role="button">
+              <path d="M166 36 C214 34 260 54 282 94 L214 124 L160 116 Z" />
+              <circle class="bca-dot" cx="216" cy="74" r="5" />
+              <text x="216" y="60" text-anchor="middle" class="bca-lbl">PAR</text>
+              <text x="216" y="94" text-anchor="middle" class="bca-val">${lobes[2].score}</text>
+            </g>
+
+            <!-- 3. Anterior Cingulate Cortex (Core) -->
+            <g class="bca-lobe ${weakestLobe.id === "acc" ? "is-weak" : strongestLobe.id === "acc" ? "is-strong" : ""}" data-lobe="acc" tabindex="0" role="button">
+              <path d="M124 116 C142 92 188 92 210 116 C194 146 150 152 124 116 Z" />
+              <circle class="bca-dot" cx="166" cy="118" r="4" />
+              <text x="166" y="109" text-anchor="middle" class="bca-lbl">ACC</text>
+              <text x="166" y="133" text-anchor="middle" class="bca-val">${lobes[1].score}</text>
+            </g>
+
+            <!-- 4. Hippocampus / Temporal (Lower-Mid) -->
+            <g class="bca-lobe ${weakestLobe.id === "hippo" ? "is-weak" : strongestLobe.id === "hippo" ? "is-strong" : ""}" data-lobe="hippo" tabindex="0" role="button">
+              <path d="M98 158 L158 144 L224 148 C218 182 182 198 142 194 C116 190 102 174 98 158 Z" />
+              <circle class="bca-dot" cx="160" cy="172" r="5" />
+              <text x="160" y="162" text-anchor="middle" class="bca-lbl">HIP</text>
+              <text x="160" y="188" text-anchor="middle" class="bca-val">${lobes[3].score}</text>
+            </g>
+
+            <!-- 5. Sensorimotor & Visual Speed (Back) -->
+            <g class="bca-lobe ${weakestLobe.id === "motor" ? "is-weak" : strongestLobe.id === "motor" ? "is-strong" : ""}" data-lobe="motor" tabindex="0" role="button">
+              <path d="M218 126 L284 98 C298 128 292 164 266 184 C248 196 226 196 218 182 L226 146 Z" />
+              <circle class="bca-dot" cx="258" cy="148" r="5" />
+              <text x="258" y="136" text-anchor="middle" class="bca-lbl">SPD</text>
+              <text x="258" y="166" text-anchor="middle" class="bca-val">${lobes[4].score}</text>
+            </g>
+
+            <!-- Synaptic impulse lines linking lobes -->
+            <path class="lb-synapse" d="M106 88 Q160 66 216 74" fill="none"/>
+            <path class="lb-synapse" d="M106 88 Q138 112 166 122" fill="none" style="--d:0.6s"/>
+            <path class="lb-synapse" d="M166 122 Q212 134 258 148" fill="none" style="--d:1.2s"/>
+            <path class="lb-synapse" d="M160 172 Q208 164 258 148" fill="none" style="--d:1.8s"/>
+          </svg>
+
+          <div class="bca-lobe-tabs" id="bcaLobeTabs">
+            ${lobes.map((l) => `
+              <button type="button" class="bca-lobe-tab ${l.id === weakestLobe.id ? "is-active is-weak" : ""}" data-lobe-tab="${l.id}">
+                <span>${l.code}</span>
+                <strong>${l.score}</strong>
+              </button>
+            `).join("")}
           </div>
         </div>
 
-        <div class="drc-col drc-advice">
-          <span class="st-label">3 СОВЕТА НА ЭТУ НЕДЕЛЮ · ${plan.title.toUpperCase()}</span>
-          <ol class="drc-steps">
-            ${plan.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}
-          </ol>
-          <div class="drc-launch-row">
-            <span class="st-label">ЗАПУСТИТЬ ПРОКАЧКУ:</span>
-            <div class="drc-launch-pills">
-              ${plan.drills.filter((id) => MODE_META[id]).map((id) => `
-                <button type="button" class="ghost-action drc-drill-btn" data-mode="${id}">
-                  ${escapeHtml(MODE_META[id].title)} →
-                </button>
-              `).join("")}
-            </div>
-          </div>
+        <div class="bca-inspector" id="bcaInspector">
+          ${renderLobeDossierHtml(weakestLobe, weakestLobe.id, strongestLobe.id)}
         </div>
       </div>
     </section>
+  `;
+}
+
+function renderLobeDossierHtml(lobe, weakId, strongId) {
+  const statusTag = lobe.id === weakId
+    ? `<span class="bca-status is-weak">ПРИОРИТЕТНЫЙ УПОР</span>`
+    : lobe.id === strongId
+      ? `<span class="bca-status is-strong">СИЛЬНАЯ ЗОНА</span>`
+      : `<span class="bca-status">В БАЛАНСЕ</span>`;
+  return `
+    <div class="bca-dos-head">
+      <div>
+        <span class="st-label">${lobe.code} · ОТДЕЛ МОЗГА</span>
+        <h4>${escapeHtml(lobe.name)}</h4>
+        <p class="bca-dos-role">${escapeHtml(lobe.role)}</p>
+      </div>
+      <div class="bca-dos-score">
+        <strong>${lobe.score}</strong>
+        <small>/ 100</small>
+      </div>
+    </div>
+    ${statusTag}
+    <div class="bca-dos-bar"><span style="width:${Math.min(100, Math.max(8, lobe.score))}%"></span></div>
+    <div class="bca-dos-why">
+      <span class="st-label">ЗАЧЕМ РАЗВИВАТЬ ЭТОТ ОТДЕЛ</span>
+      <p>${escapeHtml(lobe.why)}</p>
+    </div>
+    <div class="bca-dos-tips">
+      <span class="st-label">ПЛАН ПРОКАЧКИ НА ЭТУ НЕДЕЛЮ</span>
+      <ol class="drc-steps">
+        ${lobe.tips.map((t) => `<li>${escapeHtml(t)}</li>`).join("")}
+      </ol>
+    </div>
+    <div class="bca-dos-drills">
+      <span class="st-label">УПРАЖНЕНИЯ ДЛЯ ЭТОГО ОТДЕЛА:</span>
+      <div class="drc-launch-pills">
+        ${lobe.drills.filter((id) => MODE_META[id]).map((id) => `
+          <button type="button" class="primary-action bca-drill-go" data-mode="${id}">
+            ${escapeHtml(MODE_META[id].title)} →
+          </button>
+        `).join("")}
+      </div>
+    </div>
   `;
 }
 
@@ -1875,6 +2031,41 @@ export function renderPageProgress(refs, state, handlers) {
   refs.arena.querySelectorAll("[data-progress-mode]").forEach((btn) => {
     btn.addEventListener("click", () => handlers.openMode?.(btn.dataset.progressMode));
   });
+
+  // Bind Interactive Anatomical Brain Atlas lobe clicks
+  const atlas = refs.arena.querySelector("#brainCabinetAtlas");
+  const inspector = refs.arena.querySelector("#bcaInspector");
+  if (atlas && inspector) {
+    const lobes = getCabinetLobes(state);
+    const sorted = [...lobes].sort((a, b) => a.score - b.score);
+    const weakId = sorted[0].id;
+    const strongId = sorted[sorted.length - 1].id;
+
+    const bindLaunchers = () => {
+      inspector.querySelectorAll("[data-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => handlers.openMode?.(btn.dataset.mode));
+      });
+    };
+
+    const selectLobe = (lobeId) => {
+      const lobe = lobes.find((l) => l.id === lobeId) || lobes[0];
+      atlas.querySelectorAll(".bca-lobe").forEach((el) => el.classList.toggle("is-selected", el.dataset.lobe === lobe.id));
+      atlas.querySelectorAll("[data-lobe-tab]").forEach((el) => el.classList.toggle("is-active", el.dataset.lobeTab === lobe.id));
+      inspector.innerHTML = renderLobeDossierHtml(lobe, weakId, strongId);
+      bindLaunchers();
+    };
+
+    atlas.querySelectorAll(".bca-lobe").forEach((el) => {
+      el.addEventListener("click", () => selectLobe(el.dataset.lobe));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectLobe(el.dataset.lobe); }
+      });
+    });
+    atlas.querySelectorAll("[data-lobe-tab]").forEach((el) => {
+      el.addEventListener("click", () => selectLobe(el.dataset.lobeTab));
+    });
+    selectLobe(weakId);
+  }
 }
 
 function buildProgressDashboard(state, records, insights, coach) {
@@ -2642,6 +2833,17 @@ export function renderResult(refs, result, state, handlers) {
 
   const isPr = analysis.newAccBest || analysis.newRtBest;
   const resultCoach = buildResultCoach(state, result, analysis);
+  const brainTag = getDrillBrainTag(result.mode);
+  const gaugeCirc = 2 * Math.PI * 54;
+  const gaugeOffset = (gaugeCirc * (1 - Math.max(0, Math.min(100, percent)) / 100)).toFixed(1);
+  const domainGains = Object.entries(meta.domainWeights || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([dk, weight]) => {
+      const dm = DOMAIN_META[dk] || { label: dk };
+      const pts = Math.max(1, Math.round(result.xp * weight * 0.25));
+      return `<span class="rbi-chip"><strong>${escapeHtml(dm.label)}</strong><em>+${pts}</em></span>`;
+    })
+    .join("");
 
   refs.arena.innerHTML = `
     <div class="result-panel result-${status} ${isPr ? "is-pr" : ""}" style="--route-accent:${meta.accent}; --route-glow:${meta.glow}">
@@ -2650,7 +2852,13 @@ export function renderResult(refs, result, state, handlers) {
       <div class="result-hero-v5">
         <div class="result-hero-left">
           <div class="result-number-block">
-            <span class="result-big-number" data-status="${status}">${percent}<sup>%</sup></span>
+            <div class="result-gauge-wrap" data-status="${status}">
+              <svg class="result-gauge-svg" viewBox="0 0 128 128" aria-hidden="true">
+                <circle class="rg-track" cx="64" cy="64" r="54" />
+                <circle class="rg-fill" cx="64" cy="64" r="54" style="stroke-dasharray:${gaugeCirc.toFixed(1)}; stroke-dashoffset:${gaugeOffset}" />
+              </svg>
+              <span class="result-big-number" data-status="${status}">${percent}<sup>%</sup></span>
+            </div>
             <div class="result-label-stack">
               <span class="result-label-status status-pill ${analysis.tone}">${analysis.label}</span>
               ${analysis.newAccBest ? `<span class="status-pill good">🏆 рекорд точности</span>` : ""}
@@ -2685,6 +2893,15 @@ export function renderResult(refs, result, state, handlers) {
           <h3>${meta.title}</h3>
           ${isPr ? `<button class="result-share-btn" type="button" id="resultShareBtn" title="Скачать карточку"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg> Поделиться</button>` : ""}
         </div>
+      </div>
+
+      <div class="result-brain-impact">
+        <div class="rbi-main">
+          <span class="rbi-kicker">Прокачанный отдел мозга</span>
+          <strong class="rbi-lobe">🧠 ${escapeHtml(brainTag.lobe)}</strong>
+          <p class="rbi-why">${escapeHtml(brainTag.why)}</p>
+        </div>
+        <div class="rbi-chips">${domainGains}</div>
       </div>
 
       <div class="analysis-block">

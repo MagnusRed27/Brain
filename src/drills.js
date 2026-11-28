@@ -3,7 +3,7 @@ import { adaptDifficulty } from "./progression.js";
 import { compareText, escapeHtml, randomInt, shuffle, sleep } from "./utils.js";
 import { renderDrillShell, renderSidePanel } from "./ui.js";
 import { runReaction, runStroop, runTrail, runAnback } from "./drills.extra.js";
-import { runMentalMath, runSchulte, runAntiSaccade, runRSVP, runStopSignal, runFlanker, runBackwardsSpan, runVerbalFluency, runTowerOfLondon, runDigitSymbol, runEpisodicVault, runRuleHunt } from "./drills.lab.js";
+import { runMentalMath, runSchulte, runAntiSaccade, runRSVP, runStopSignal, runFlanker, runBackwardsSpan, runVerbalFluency, runTowerOfLondon, runDigitSymbol, runEpisodicVault, runRuleHunt, runSynapsePath, runQuantumPattern } from "./drills.lab.js";
 import { createVoiceListener, isVoiceSupported, speak } from "./voice.js";
 
 export const DRILL_DEFINITIONS = {
@@ -30,6 +30,8 @@ export const DRILL_DEFINITIONS = {
   dsst: { id: "dsst", ...MODE_META.dsst },
   evault: { id: "evault", ...MODE_META.evault },
   rulehunt: { id: "rulehunt", ...MODE_META.rulehunt },
+  synpath: { id: "synpath", ...MODE_META.synpath },
+  qpattern: { id: "qpattern", ...MODE_META.qpattern },
 };
 
 export function startDrill(mode, context) {
@@ -57,6 +59,8 @@ export function startDrill(mode, context) {
     dsst: runDigitSymbol,
     evault: runEpisodicVault,
     rulehunt: runRuleHunt,
+    synpath: runSynapsePath,
+    qpattern: runQuantumPattern,
   };
   return (runners[mode] || runNback)(context);
 }
