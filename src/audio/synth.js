@@ -16,6 +16,7 @@ export const PRESETS = {
   "hit-crisp":     { notes: [NOTE.F4, NOTE.A4],              dur: 0.14, amp: 0.15, filter: 1350, decay: 0.20, attack: 0.007 },
   "streak":        { notes: [NOTE.A4, NOTE.D5],              dur: 0.18, amp: 0.15, filter: 1400, decay: 0.28, attack: 0.010, stagger: 0.055 },
   "combo":         { notes: [NOTE.G4, NOTE.B4, NOTE.D5],     dur: 0.22, amp: 0.16, filter: 1500, decay: 0.36, attack: 0.012, stagger: 0.05 },
+  "overdrive":     { notes: [NOTE.D4, NOTE.F4, NOTE.A4, NOTE.E5], dur: 0.36, amp: 0.17, filter: 1700, decay: 0.58, attack: 0.014, stagger: 0.055 },
   "miss-near":     { notes: [NOTE.A3],                       dur: 0.14, amp: 0.12, filter: 520,  decay: 0.16, attack: 0.010 },
   "miss-bad":      { notes: [NOTE.F3],                       dur: 0.18, amp: 0.13, filter: 420,  decay: 0.20, attack: 0.012 },
   "level-up":      { notes: [NOTE.D4, NOTE.A4, NOTE.D5],     dur: 0.34, amp: 0.16, filter: 1600, decay: 0.55, attack: 0.015, stagger: 0.08 },
@@ -38,8 +39,12 @@ export function playPreset(engine, name, options = {}) {
   const pan = options.pan ?? 0;
   const stagger = preset.stagger || 0;
   const notes = preset.notes || [NOTE.D4];
+  const PENTATONIC_RATIOS = [1, 1.12246, 1.25992, 1.49831, 1.68179, 2.0, 2.24492];
+  const stepIdx = Math.max(0, Math.min(PENTATONIC_RATIOS.length - 1, Number(options.streakStep) || 0));
+  const pitchMul = PENTATONIC_RATIOS[stepIdx] || 1;
 
-  notes.forEach((freq, idx) => {
+  notes.forEach((baseFreq, idx) => {
+    const freq = baseFreq * pitchMul;
     const startAt = baseNow + idx * stagger;
     const osc = ctx.createOscillator();
     osc.type = "sine";

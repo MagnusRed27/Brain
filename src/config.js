@@ -58,6 +58,8 @@ export const DEFAULT_LEVELS = {
   rulehunt: 1,
   synpath: 1,
   qpattern: 1,
+  orbit: 1,
+  chrono: 1,
 };
 
 export const DEFAULT_CARDS = [
@@ -367,9 +369,27 @@ export const MODE_META = {
     objective: "Найди скрытое правило в геометрической 3×3 матрице (как тест Равена) и выбери недостающую фигуру.",
     domainWeights: { logic: 1, spatial: 0.75, wm: 0.35 },
   },
+  orbit: {
+    title: "Orbit Track",
+    kicker: "распределённый фокус",
+    code: "OT",
+    accent: COLORS.cyan,
+    glow: "rgba(34, 211, 238, 0.28)",
+    objective: "Удерживай взглядом несколько целевых нейро-сфер во время орбитального движения и отметь их кликами после остановки.",
+    domainWeights: { focus: 1, spatial: 0.85, wm: 0.5 },
+  },
+  chrono: {
+    title: "Chrono Pulse",
+    kicker: "чувство времени",
+    code: "CP",
+    accent: COLORS.mint,
+    glow: "rgba(45, 212, 191, 0.26)",
+    objective: "Поймай темп эталонных импульсов и кликни точно в момент скрытого такта, когда визуальный сигнал погаснет.",
+    domainWeights: { focus: 0.85, speed: 0.9, wm: 0.4 },
+  },
 };
 
-export const DRILL_IDS = ["nback", "grid", "focus", "logic", "recall", "scan", "rotate", "reaction", "trail", "stroop", "anback", "math", "schulte", "antisaccade", "rsvp", "stopsig", "flanker", "bspan", "vfluency", "tower", "dsst", "evault", "rulehunt", "synpath", "qpattern"];
+export const DRILL_IDS = ["nback", "grid", "focus", "logic", "recall", "scan", "rotate", "reaction", "trail", "stroop", "anback", "math", "schulte", "antisaccade", "rsvp", "stopsig", "flanker", "bspan", "vfluency", "tower", "dsst", "evault", "rulehunt", "synpath", "qpattern", "orbit", "chrono"];
 
 export const DEFAULT_SETTINGS = {
   reducedMotion: false,

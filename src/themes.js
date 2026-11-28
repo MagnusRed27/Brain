@@ -17,7 +17,7 @@ export const THEMES = {
       warning: "#f59e0b",
       danger: "#fb7185",
     },
-    sceneMood: "deepwave",
+    sceneMood: "obsidian",
   },
   aurora: {
     id: "aurora",

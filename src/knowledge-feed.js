@@ -343,3 +343,75 @@ export function getRitualContext() {
     sub: "Включи мягкий фон, сохрани интересные мысли в FSRS-5 и береги сон.",
   };
 }
+
+/**
+ * Compact scientific SVG micro-diagram for each knowledge sticker card.
+ */
+export function getKnowledgeVisualSvg(card) {
+  const id = card?.id || "";
+  const dom = card?.domain || "science";
+  const stroke = dom === "science" ? "#2dd4bf" : dom === "math" ? "#818cf8" : dom === "ai" ? "#22d3ee" : "#fbbf24";
+
+  const SPECIFIC = {
+    "sci-slow-wave-replay": `
+      <path d="M8 28 Q22 10 36 28 T64 28 Q74 28 80 26 L84 10 L88 40 L92 12 L96 38 L100 16 L104 28 Q122 14 140 28 T172 28" fill="none" stroke="${stroke}" stroke-width="1.8"/>
+      <text x="86" y="10" fill="${stroke}" font-size="7" font-family="monospace">×10 SWR</text>`,
+    "sci-myelin-plasticity": `
+      <line x1="10" y1="24" x2="170" y2="24" stroke="${stroke}" stroke-opacity="0.4" stroke-width="1.5"/>
+      <rect x="22" y="17" width="26" height="14" rx="6" fill="${stroke}" fill-opacity="0.22" stroke="${stroke}" stroke-width="1.3"/>
+      <rect x="62" y="17" width="26" height="14" rx="6" fill="${stroke}" fill-opacity="0.22" stroke="${stroke}" stroke-width="1.3"/>
+      <rect x="102" y="17" width="26" height="14" rx="6" fill="${stroke}" fill-opacity="0.22" stroke="${stroke}" stroke-width="1.3"/>
+      <path d="M16 16 Q35 4 55 16 Q75 4 95 16 Q115 4 136 16" fill="none" stroke="#edf4fc" stroke-width="1.2" stroke-dasharray="2 2"/>`,
+    "sci-testing-effect": `
+      <path d="M14 12 Q65 14 164 19" fill="none" stroke="${stroke}" stroke-width="2"/>
+      <path d="M14 12 Q55 34 164 40" fill="none" stroke="#8496ae" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <text x="116" y="15" fill="${stroke}" font-size="7.5" font-family="monospace">Recall 80%</text>
+      <text x="112" y="36" fill="#8496ae" font-size="7" font-family="monospace">Чтение 36%</text>`,
+    "math-bayes-update": `
+      <rect x="18" y="24" width="28" height="16" rx="3" fill="${stroke}" fill-opacity="0.22" stroke="${stroke}"/>
+      <text x="32" y="19" text-anchor="middle" fill="#8496ae" font-size="7" font-family="monospace">Prior</text>
+      <path d="M54 30 L74 30" stroke="${stroke}" stroke-width="1.4"/>
+      <rect x="82" y="12" width="28" height="28" rx="3" fill="${stroke}" fill-opacity="0.35" stroke="${stroke}"/>
+      <path d="M118 26 L136 26" stroke="${stroke}" stroke-width="1.4"/>
+      <rect x="142" y="17" width="26" height="23" rx="3" fill="#22d3ee" fill-opacity="0.35" stroke="#22d3ee"/>`,
+    "math-shannon-entropy": `
+      <path d="M18 40 Q90 2 162 40" fill="none" stroke="${stroke}" stroke-width="2"/>
+      <line x1="90" y1="21" x2="90" y2="40" stroke="${stroke}" stroke-opacity="0.45" stroke-dasharray="2 2"/>
+      <circle cx="90" cy="21" r="3" fill="${stroke}"/>
+      <text x="100" y="15" fill="${stroke}" font-size="7.5" font-family="monospace">H=1 bit (p=0.5)</text>`,
+    "math-kelly-criterion": `
+      <path d="M16 36 Q78 -4 134 38 L156 44" fill="none" stroke="${stroke}" stroke-width="1.9"/>
+      <circle cx="76" cy="16" r="3.2" fill="#2dd4bf"/>
+      <text x="83" y="16" fill="#2dd4bf" font-size="7.5" font-family="monospace">f* opt</text>`,
+    "math-benford": `
+      ${[30, 18, 12, 10, 8, 7, 6, 5, 4.5].map((v, i) => `<rect x="${18 + i * 16}" y="${40 - v}" width="10" height="${v}" rx="2" fill="${stroke}" fill-opacity="${i === 0 ? 0.85 : 0.35}"/>`).join("")}
+      <text x="34" y="14" fill="${stroke}" font-size="7.5" font-family="monospace">d=1: 30.1%</text>`,
+    "ai-test-time-compute": `
+      <circle cx="24" cy="24" r="4" fill="${stroke}"/>
+      <path d="M28 24 L66 12 M28 24 L66 24 M28 24 L66 36 M66 12 L114 18 M66 24 L114 18 M114 18 L156 24" fill="none" stroke="${stroke}" stroke-width="1.4"/>
+      <circle cx="66" cy="12" r="3" fill="${stroke}"/><circle cx="66" cy="24" r="3" fill="${stroke}"/><circle cx="66" cy="36" r="3" fill="#fb7185"/>
+      <circle cx="156" cy="24" r="4.5" fill="#2dd4bf"/>`,
+    "ai-grokking": `
+      <path d="M14 38 L36 12 L164 12" fill="none" stroke="#8496ae" stroke-width="1.3" stroke-dasharray="3 2"/>
+      <path d="M14 38 L96 37 Q108 37 114 14 L164 14" fill="none" stroke="${stroke}" stroke-width="2"/>
+      <text x="118" y="28" fill="${stroke}" font-size="7.5" font-family="monospace">Grokking ↑</text>`,
+    "long-vo2max": `
+      <path d="M16 12 Q96 13 164 20" fill="none" stroke="${stroke}" stroke-width="2"/>
+      <path d="M16 16 Q88 26 164 41" fill="none" stroke="#fb7185" stroke-width="1.4" stroke-dasharray="3 2"/>
+      <text x="108" y="13" fill="${stroke}" font-size="7" font-family="monospace">High VO₂max</text>`,
+    "long-mtor-ampk": `
+      <line x1="28" y1="28" x2="152" y2="20" stroke="${stroke}" stroke-width="2"/>
+      <polygon points="86,38 94,38 90,25" fill="#8496ae"/>
+      <text x="24" y="21" fill="#38bdf8" font-size="7.5" font-family="monospace">mTOR</text>
+      <text x="128" y="15" fill="${stroke}" font-size="7.5" font-family="monospace">AMPK</text>`,
+  };
+
+  const fallbackByDomain = {
+    science: `<path d="M12 24 Q34 8 56 24 T100 24 T144 24 T172 24" fill="none" stroke="${stroke}" stroke-width="1.7"/><circle cx="56" cy="24" r="3.5" fill="${stroke}"/><circle cx="122" cy="24" r="3.5" fill="${stroke}"/>`,
+    math: `<line x1="16" y1="38" x2="164" y2="38" stroke="#8496ae" stroke-opacity="0.35"/><path d="M20 36 Q64 34 94 20 T160 10" fill="none" stroke="${stroke}" stroke-width="1.9"/><circle cx="94" cy="20" r="3" fill="${stroke}"/>`,
+    ai: `<circle cx="26" cy="15" r="3" fill="${stroke}"/><circle cx="26" cy="33" r="3" fill="${stroke}"/><circle cx="88" cy="12" r="3" fill="${stroke}"/><circle cx="88" cy="24" r="3" fill="${stroke}"/><circle cx="88" cy="36" r="3" fill="${stroke}"/><circle cx="152" cy="24" r="4" fill="#2dd4bf"/><path d="M29 15 L85 12 M29 15 L85 24 M29 33 L85 24 M29 33 L85 36 M91 12 L148 24 M91 24 L148 24 M91 36 L148 24" stroke="${stroke}" stroke-opacity="0.55" stroke-width="1.1"/>`,
+    longevity: `<path d="M16 16 C42 16 54 32 80 32 C106 32 118 16 144 16 C156 16 164 20 168 24" fill="none" stroke="${stroke}" stroke-width="1.7"/><path d="M16 32 C42 32 54 16 80 16 C106 16 118 32 144 32 C156 32 164 28 168 24" fill="none" stroke="#38bdf8" stroke-opacity="0.7" stroke-width="1.5"/>`,
+  };
+
+  return `<svg class="st-diagram-svg" viewBox="0 0 180 46" aria-hidden="true">${SPECIFIC[id] || fallbackByDomain[dom] || fallbackByDomain.science}</svg>`;
+}

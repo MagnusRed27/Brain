@@ -3,7 +3,7 @@ import { adaptDifficulty } from "./progression.js";
 import { compareText, escapeHtml, randomInt, shuffle, sleep } from "./utils.js";
 import { renderDrillShell, renderSidePanel } from "./ui.js";
 import { runReaction, runStroop, runTrail, runAnback } from "./drills.extra.js";
-import { runMentalMath, runSchulte, runAntiSaccade, runRSVP, runStopSignal, runFlanker, runBackwardsSpan, runVerbalFluency, runTowerOfLondon, runDigitSymbol, runEpisodicVault, runRuleHunt, runSynapsePath, runQuantumPattern } from "./drills.lab.js";
+import { runMentalMath, runSchulte, runAntiSaccade, runRSVP, runStopSignal, runFlanker, runBackwardsSpan, runVerbalFluency, runTowerOfLondon, runDigitSymbol, runEpisodicVault, runRuleHunt, runSynapsePath, runQuantumPattern, runOrbitTrack, runChronoPulse } from "./drills.lab.js";
 import { createVoiceListener, isVoiceSupported, speak } from "./voice.js";
 
 export const DRILL_DEFINITIONS = {
@@ -32,6 +32,8 @@ export const DRILL_DEFINITIONS = {
   rulehunt: { id: "rulehunt", ...MODE_META.rulehunt },
   synpath: { id: "synpath", ...MODE_META.synpath },
   qpattern: { id: "qpattern", ...MODE_META.qpattern },
+  orbit: { id: "orbit", ...MODE_META.orbit },
+  chrono: { id: "chrono", ...MODE_META.chrono },
 };
 
 export function startDrill(mode, context) {
@@ -61,6 +63,8 @@ export function startDrill(mode, context) {
     rulehunt: runRuleHunt,
     synpath: runSynapsePath,
     qpattern: runQuantumPattern,
+    orbit: runOrbitTrack,
+    chrono: runChronoPulse,
   };
   return (runners[mode] || runNback)(context);
 }

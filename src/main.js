@@ -745,6 +745,12 @@ function finishRound(result) {
   result.streakBest = roundStats.bestStreak;
   result.attempts = roundStats.attempts;
   result.hits = roundStats.hits;
+  result.trials = (roundStats.trials || []).slice(-32);
+  if (roundStats.bestStreak >= 8) {
+    const bonus = Math.max(4, Math.round(result.xp * 0.15));
+    result.xp += bonus;
+    result.overdriveBonus = bonus;
+  }
   // capture pending metacog prediction BEFORE applying result for renderResult to display
   const pendingMeta = getState().metacog?.pending;
   if (pendingMeta && pendingMeta.mode === result.mode) {
@@ -1078,7 +1084,19 @@ function spawnFloatText(text, x, y, tone = "good") {
   window.setTimeout(() => el.remove(), 1100);
 }
 
+function spawnClickRipple(x, y, hit) {
+  const el = document.createElement("span");
+  el.className = `arena-click-ripple ${hit ? "is-hit" : "is-miss"}`;
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  document.body.appendChild(el);
+  window.setTimeout(() => el.remove(), 560);
+}
+
 function recordAnswer(hit, label = "") {
+  const now = performance.now();
+  const stepRt = roundStats.lastAt ? Math.max(110, Math.min(6000, Math.round(now - roundStats.lastAt))) : 650;
+  roundStats.lastAt = now;
   roundStats.attempts += 1;
   if (hit) {
     roundStats.hits += 1;
@@ -1089,30 +1107,52 @@ function recordAnswer(hit, label = "") {
     roundStats.streak = 0;
     bus.emit(EVENTS.DRILL_MISS);
   }
+  roundStats.trials.push({ hit: Boolean(hit), rt: stepRt, streak: roundStats.streak });
+
   const accuracy = roundStats.attempts ? Math.round((roundStats.hits / roundStats.attempts) * 100) : 0;
   const streakEl = refs.arena.querySelector("#roundStreak");
   const signalEl = refs.arena.querySelector("#roundSignal");
+  const odFill = refs.arena.querySelector("#overdriveFill");
+  const odLabel = refs.arena.querySelector("#overdriveLabel");
+  const taskZone = refs.arena.querySelector(".task-zone");
+
   if (streakEl) streakEl.textContent = roundStats.streak;
   if (signalEl) {
     signalEl.textContent = label || (hit ? `${accuracy}%` : "сбой");
     signalEl.classList.remove("is-good", "is-bad");
     signalEl.classList.add(hit ? "is-good" : "is-bad");
   }
+
+  // Synapse Overdrive meter (charges across 8 streak steps)
+  const odPct = Math.min(100, Math.round((roundStats.streak / 8) * 100));
+  const odMult = roundStats.streak >= 8 ? "OVERDRIVE ×3" : roundStats.streak >= 5 ? "ПОТОК ×2" : roundStats.streak >= 3 ? "ФОКУС ×1.5" : "×1.0";
+  if (odFill) odFill.style.width = `${odPct}%`;
+  if (odLabel) {
+    odLabel.textContent = odMult;
+    odLabel.dataset.tier = roundStats.streak >= 8 ? "3" : roundStats.streak >= 5 ? "2" : roundStats.streak >= 3 ? "1" : "0";
+  }
+  if (taskZone) {
+    taskZone.classList.toggle("is-overdrive", roundStats.streak >= 8);
+  }
+
   const live = Math.min(3, combo + roundStats.streak * 0.04);
   if (refs.comboLabel) refs.comboLabel.textContent = `x${live.toFixed(1)}`;
   try {
     sensoryCore.engine.music?.()?.setCombo?.(live);
   } catch { /* noop */ }
 
-  // Floating +XP at last pointer position OR arena center
+  const x = (window._lastPointerX || (window.innerWidth / 2));
+  const y = (window._lastPointerY || (window.innerHeight / 2));
+  spawnClickRipple(x, y, hit);
+
   if (hit) {
-    const x = (window._lastPointerX || (window.innerWidth / 2));
-    const y = (window._lastPointerY || (window.innerHeight / 2));
-    const streakBonus = roundStats.streak >= 5 ? "🔥" : "";
-    spawnFloatText(`+1 ${streakBonus}`, x, y, "good");
+    const streakTag = roundStats.streak === 8 ? "⚡ OVERDRIVE!" : roundStats.streak >= 5 ? `🔥 ×${roundStats.streak}` : "+1";
+    spawnFloatText(streakTag, x, y, "good");
   }
 
-  sensory.cue(hit ? "hit-soft" : "miss-near");
+  const streakStep = hit ? Math.min(6, Math.max(0, roundStats.streak - 1)) : 0;
+  const cueType = !hit ? "miss-near" : roundStats.streak === 8 ? "overdrive" : roundStats.streak === 5 ? "combo" : "hit-soft";
+  sensory.cue(cueType, { streakStep, x, y });
 }
 
 // Track pointer for floating text spawn points
@@ -1121,7 +1161,7 @@ window.addEventListener("pointerdown", (e) => {
   window._lastPointerY = e.clientY;
 }, { passive: true });
 
-function emptyRoundStats() { return { attempts: 0, hits: 0, streak: 0, bestStreak: 0 }; }
+function emptyRoundStats() { return { attempts: 0, hits: 0, streak: 0, bestStreak: 0, lastAt: performance.now(), trials: [] }; }
 
 let breathOverlayEl = null;
 function showBreathOverlay() {

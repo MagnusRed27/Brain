@@ -16,7 +16,8 @@ const DRILL_DURATION_MIN = {
   reaction: 2, trail: 3, math: 3, schulte: 2,
   antisaccade: 3, rsvp: 2, stopsig: 3,
   flanker: 3, bspan: 3, vfluency: 2,
-  tower: 4, dsst: 2, evault: 6,
+  tower: 4, dsst: 2, evault: 6, rulehunt: 3,
+  synpath: 3, qpattern: 3, orbit: 3, chrono: 2,
 };
 export function getDrillDuration(mode) { return DRILL_DURATION_MIN[mode] || 3; }
 import { analyzeRound, QUADRANT_META, generateInsights } from "./analysis.js";
@@ -26,7 +27,7 @@ import { getCircadianTip } from "./facts.js";
 import { getScience } from "./drill-science.js";
 import { getProgram, getCurrentProgramDay, getProgramDay, getProgramSummary, getProgramStreak, isTodayDone, PROGRAM_DAYS } from "./program.js";
 import { GOAL_TEMPLATES, evaluateGoal, getActiveGoals, describeGoal } from "./goals.js";
-import { KNOWLEDGE_DOMAINS, KNOWLEDGE_CARDS, getKnowledgeByDomain, getRitualContext } from "./knowledge-feed.js";
+import { KNOWLEDGE_DOMAINS, KNOWLEDGE_CARDS, getKnowledgeByDomain, getRitualContext, getKnowledgeVisualSvg } from "./knowledge-feed.js";
 
 export function createRefs() {
   return {
@@ -326,9 +327,11 @@ function renderLivingBrainSvg(domains = {}, overall = 41, readiness = 72) {
         <line x1="128" y1="12" x2="128" y2="152" stroke="var(--accent)" stroke-opacity="0.10" stroke-width="0.6"/>
         <circle cx="128" cy="82" r="56" fill="none" stroke="var(--accent)" stroke-opacity="0.14" stroke-width="0.7" stroke-dasharray="2 4"/>
         <circle class="hud-scanner" cx="128" cy="82" r="68" fill="none" stroke="var(--accent)" stroke-opacity="0.28" stroke-width="0.9" stroke-dasharray="18 54 6 30"/>
-        <!-- Fine holographic cortex contour -->
-        <path class="lb-silhouette" d="M66 116 C44 110 38 86 48 66 C54 48 72 36 92 32 C108 20 136 18 156 28 C178 28 200 44 206 66 C216 80 212 104 196 116 C182 126 164 128 148 124 C140 134 128 142 122 150 C118 140 112 132 106 128 C90 128 76 122 66 116 Z" />
-        <path class="lb-fold" d="M80 54 C96 62 110 60 124 52 M138 44 C154 54 168 54 182 48 M68 86 C86 82 104 88 118 96 M140 84 C156 80 174 84 190 92" />
+        <!-- Detailed anatomical cortex + cerebellum + brainstem silhouette -->
+        <path class="lb-silhouette" d="M58 106 C38 98 34 76 44 58 C50 42 68 30 88 26 C106 16 138 14 162 24 C186 26 206 44 212 66 C220 82 214 102 198 112 C186 120 172 122 158 120 C154 132 142 138 130 134 C126 144 122 152 116 154 C112 146 110 136 106 128 C88 128 70 118 58 106 Z" />
+        <!-- Cerebellum folia & Sylvian/Central sulci -->
+        <path class="lb-cerebellum" d="M158 120 C174 118 192 122 196 132 C194 142 174 144 160 136 Z" fill="color-mix(in srgb, var(--accent) 8%, transparent)" stroke="var(--accent)" stroke-opacity="0.35" stroke-width="0.9"/>
+        <path class="lb-fold" d="M126 20 C122 44 126 66 132 84 M78 92 C104 84 130 86 154 98 M62 66 C80 58 98 62 114 54 M142 42 C160 50 178 48 194 58 M68 46 C84 40 102 38 118 44 M164 126 L190 128 M162 132 L188 134" />
         <!-- Flowing cyan/blue synaptic energy paths -->
         ${curves.map((pathD, idx) => `<path class="lb-synapse" d="${pathD}" fill="none" style="--d:${(idx * 0.35).toFixed(2)}s" />`).join("")}
         <!-- Interactive telemetry nodes -->
@@ -373,10 +376,15 @@ function attachSpotlightEffects(root) {
 function renderStickerCardHtml(card, state, idx = 0) {
   const today = new Date().toISOString().slice(0, 10);
   const studied = (state.knowledgeLog?.[today] || []).includes(card.id);
-  const inFsrs = (state.cards || []).some((c) => c.front === card.question);
+  const fsrsCard = (state.cards || []).find((c) => c.front === card.question);
+  const inFsrs = Boolean(fsrsCard);
   const domInfo = KNOWLEDGE_DOMAINS.find((d) => d.id === card.domain) || KNOWLEDGE_DOMAINS[1];
   const tilts = [-1.15, 0.85, -0.75, 1.05, -0.9, 0.7];
   const tilt = tilts[idx % tilts.length];
+  const retentionPct = fsrsCard
+    ? Math.max(68, Math.min(99, Math.round(86 + Math.min(13, (fsrsCard.stability || 2) * 1.6))))
+    : studied ? 88 : 0;
+  const nextDays = fsrsCard?.interval ? Math.max(1, Math.round(fsrsCard.interval)) : (inFsrs ? 1 : 0);
 
   return `
     <article class="sticker-card js-spotlight ${studied ? "is-studied" : ""}" data-kid="${card.id}" data-domain="${card.domain}" style="--tilt:${tilt}deg">
@@ -388,12 +396,18 @@ function renderStickerCardHtml(card, state, idx = 0) {
             <span class="st-tag">${escapeHtml(card.tag)}</span>
           </div>
           <h5>${escapeHtml(card.title)}</h5>
+          <div class="st-diagram-box">${getKnowledgeVisualSvg(card)}</div>
           <p class="st-body">${escapeHtml(card.body)}</p>
           <div class="st-note">
-            <span>ГЛАВНАЯ МЫСЛЬ</span>
+            <span>ПРИМЕНИТЬ СЕГОДНЯ</span>
             <p>${escapeHtml(card.takeaway)}</p>
           </div>
-          <cite class="st-src">${escapeHtml(card.source)}</cite>
+          <div class="st-retention-row">
+            <cite class="st-src">${escapeHtml(card.source)}</cite>
+            <span class="st-ret-pill ${retentionPct ? "is-live" : ""}">
+              ${inFsrs ? `Память ${retentionPct}% · ${nextDays}д` : studied ? "Усвоено сегодня" : "Новое знание"}
+            </span>
+          </div>
           <div class="st-actions">
             <button type="button" class="st-btn is-flip" data-kflip="${card.id}">Проверить ↻</button>
             <button type="button" class="st-btn ${inFsrs ? "is-saved" : ""}" data-kfsrs="${card.id}">${inFsrs ? "✓ FSRS-5" : "+ FSRS-5"}</button>
@@ -654,13 +668,15 @@ export function renderPageKnowledge(refs, state, handlers) {
   setPageHeader(refs, "база знаний · fsrs-5", "Стикеры знаний", `
     <div class="sls-head-actions">
       <span class="sls-progress-pill" id="kPageProgress">${studiedCount} ИЗУЧЕНО СЕГОДНЯ</span>
-      ${due > 0 ? `<button type="button" class="primary-action sls-btn" id="kOpenRecall">Повторить FSRS (${due}) →</button>` : ""}
+      <button type="button" class="primary-action sls-btn" id="kBlitzBtn">⚡ Блиц-проверка (5 вопросов)</button>
+      ${due > 0 ? `<button type="button" class="ghost-action sls-btn" id="kOpenRecall">Повторить FSRS (${due}) →</button>` : ""}
       <button type="button" class="ghost-action sls-btn" id="kAddToggle">+ Свой стикер</button>
     </div>
   `);
 
   refs.arena.innerHTML = `
     <div class="knowledge-board-page">
+      <section class="k-blitz-stage" id="kBlitzStage" hidden></section>
       <div class="sls-tabs" id="kPageTabs" role="tablist" aria-label="Темы знаний">
         ${KNOWLEDGE_DOMAINS.map((d, idx) => `
           <button type="button" class="sls-tab ${idx === 0 ? "is-active" : ""}" data-kdomain="${d.id}" role="tab" aria-selected="${idx === 0 ? "true" : "false"}">
@@ -714,9 +730,71 @@ export function renderPageKnowledge(refs, state, handlers) {
     if (form) form.hidden = !form.hidden;
   });
   refs.pageActions?.querySelector("#kOpenRecall")?.addEventListener("click", () => handlers.openRecall?.());
+  refs.pageActions?.querySelector("#kBlitzBtn")?.addEventListener("click", () => startKnowledgeBlitz());
   refs.arena.querySelector("#kCustomCancel")?.addEventListener("click", () => {
     if (form) form.hidden = true;
   });
+
+  function startKnowledgeBlitz() {
+    const blitzEl = refs.arena.querySelector("#kBlitzStage");
+    if (!blitzEl) return;
+    blitzEl.hidden = false;
+    const pool = activeDomain === "all" ? [...KNOWLEDGE_CARDS] : KNOWLEDGE_CARDS.filter((c) => c.domain === activeDomain);
+    const quiz = pool.sort(() => Math.random() - 0.5).slice(0, 5);
+    let qIdx = 0;
+    let score = 0;
+
+    function renderQuizStep() {
+      if (qIdx >= quiz.length) {
+        blitzEl.innerHTML = `
+          <div class="kb-head">
+            <span class="st-label">БЛИЦ ЗАВЕРШЁН · АКТИВНОЕ ИЗВЛЕЧЕНИЕ</span>
+            <button type="button" class="ghost-action sls-btn" id="kbClose">Закрыть ✕</button>
+          </div>
+          <h4>Результат: ${score} из ${quiz.length} верно</h4>
+          <p class="kb-sub">Усилие активного выбора закрепляет нейронные следы в 2 раза прочнее пассивного чтения.</p>
+        `;
+        blitzEl.querySelector("#kbClose")?.addEventListener("click", () => { blitzEl.hidden = true; });
+        return;
+      }
+      const cur = quiz[qIdx];
+      const distractors = KNOWLEDGE_CARDS.filter((c) => c.id !== cur.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map((c) => ({ text: c.answer, ok: false }));
+      const choices = [{ text: cur.answer, ok: true }, ...distractors].sort(() => Math.random() - 0.5);
+      blitzEl.innerHTML = `
+        <div class="kb-head">
+          <span class="st-label">⚡ БЛИЦ-ПРОВЕРКА · ВОПРОС ${qIdx + 1} / ${quiz.length}</span>
+          <button type="button" class="ghost-action sls-btn" id="kbClose">Свернуть ✕</button>
+        </div>
+        <h4 class="kb-q">${escapeHtml(cur.question)}</h4>
+        <div class="kb-options">
+          ${choices.map((ch) => `<button type="button" class="kb-opt" data-ok="${ch.ok ? "1" : "0"}">${escapeHtml(ch.text)}</button>`).join("")}
+        </div>
+      `;
+      blitzEl.querySelector("#kbClose")?.addEventListener("click", () => { blitzEl.hidden = true; });
+      const btns = [...blitzEl.querySelectorAll(".kb-opt")];
+      btns.forEach((b) => {
+        b.addEventListener("click", () => {
+          const ok = b.dataset.ok === "1";
+          btns.forEach((x) => {
+            x.disabled = true;
+            if (x.dataset.ok === "1") x.classList.add("is-correct");
+          });
+          if (ok) {
+            score += 1;
+            handlers.markKnowledgeStudied?.(cur.id);
+          } else {
+            b.classList.add("is-wrong");
+          }
+          qIdx += 1;
+          window.setTimeout(renderQuizStep, 680);
+        });
+      });
+    }
+    renderQuizStep();
+  }
   form?.addEventListener("submit", (e) => {
     e.preventDefault();
     const f = refs.arena.querySelector("#kCustomFront");
@@ -1567,6 +1645,8 @@ const DRILL_BRAIN_INFO = {
   rsvp:        { lobe: "Височно-теменная",     why: "Удерживать смысл текста при высокой скорости потока" },
   vfluency:    { lobe: "Височная · Лексикон",  why: "Ускорять семантический поиск и точность формулировок" },
   rotate:      { lobe: "Теменная · 3D-образы", why: "Мысленно вращать и сопоставлять геометрические модели" },
+  orbit:       { lobe: "Теменная + PFC · MOT", why: "Удерживать в фокусе сразу несколько динамических объектов без потери контроля" },
+  chrono:      { lobe: "Мозжечок + PFC · Ритм", why: "Тренировать внутреннее чувство времени и снайперскую синхронизацию внимания" },
 };
 
 function getDrillBrainTag(id) {
@@ -1670,32 +1750,68 @@ function getCabinetLobes(state) {
   ];
 }
 
+function computeWeeklyLobeDelta(state, lobeDrills) {
+  const now = Date.now();
+  const weekRounds = (state.history || []).filter((r) => {
+    const t = r.timestamp || (r.date ? new Date(r.date).getTime() : now);
+    return now - t < 7 * 86400000 && lobeDrills.includes(r.mode);
+  });
+  if (!weekRounds.length) return 0;
+  const xpSum = weekRounds.reduce((s, r) => s + (r.xp || 20), 0);
+  return Math.max(1, Math.min(18, Math.round(xpSum / 28)));
+}
+
+function getNeuroArchetype(lobes) {
+  const top = [...lobes].sort((a, b) => b.score - a.score)[0];
+  const spread = Math.max(...lobes.map((l) => l.score)) - Math.min(...lobes.map((l) => l.score));
+  if (spread <= 4) return { title: "Гармоничный Синтез", desc: "Все 5 отделов мозга развиваются равномерно без перекосов" };
+  const map = {
+    pfc: { title: "Архитектор Логики", desc: "Доминирует префронтальный контур планирования и рабочей памяти" },
+    acc: { title: "Снайпер Фокуса", desc: "Высокая устойчивость к помехам и чистый самоконтроль" },
+    parietal: { title: "Навигатор Пространства", desc: "Сильное образное мышление и распределённое внимание" },
+    hippo: { title: "Хранитель Знаний", desc: "Глубокая консолидация фактов и долговременная память" },
+    motor: { title: "Импульс Скорости", desc: "Быстрый сенсомоторный отклик и высокий темп обработки" },
+  };
+  return map[top.id] || map.pfc;
+}
+
 function renderDevelopmentCabinet(state, model, coach, recommended) {
-  const lobes = getCabinetLobes(state);
+  const lobes = getCabinetLobes(state).map((l) => ({ ...l, delta7d: computeWeeklyLobeDelta(state, l.drills) }));
 
   const sortedLobes = [...lobes].sort((a, b) => a.score - b.score);
   const weakestLobe = sortedLobes[0];
   const strongestLobe = sortedLobes[sortedLobes.length - 1];
   const rank = getNeuroRank(state.profile?.totalXp || 0);
+  const archetype = getNeuroArchetype(lobes);
   const history = state.history || [];
   const recent = history.slice(-12);
   const avgAcc = recent.length ? Math.round((recent.reduce((acc, r) => acc + (r.accuracy || 0), 0) / recent.length) * 100) : null;
 
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayRounds = history.filter((r) => r.date === todayKey);
+  const studiedToday = (state.knowledgeLog?.[todayKey] || []).length;
+  const bestStreakToday = todayRounds.reduce((m, r) => Math.max(m, r.streakBest || 0), 0);
+  const quests = [
+    { label: "Изучить 2 стикера знаний", cur: Math.min(2, studiedToday), max: 2, done: studiedToday >= 2 },
+    { label: `Прокачать слабую долю (${weakestLobe.code})`, cur: todayRounds.some((r) => weakestLobe.drills.includes(r.mode)) ? 1 : 0, max: 1, done: todayRounds.some((r) => weakestLobe.drills.includes(r.mode)) },
+    { label: "Собрать серию ×5 в потоке", cur: Math.min(5, bestStreakToday), max: 5, done: bestStreakToday >= 5 },
+  ];
+
   return `
     <section class="brain-cabinet-atlas progress-panel-v8" data-progress-view="overview" style="grid-column: 1 / -1" id="brainCabinetAtlas">
-      <!-- Top Neuro-Rank Progression Strip -->
+      <!-- Top Neuro-Rank & Archetype Progression Strip -->
       <div class="bca-rank-strip">
         <div class="bca-rank-left">
           <span class="bca-rank-emblem">${rank.tier}</span>
           <div>
-            <span class="st-label">СИСТЕМА РАЗВИТИЯ · НЕЙРО-РАНГ</span>
+            <span class="st-label">НЕЙРО-РАНГ · АРХЕТИП: ${escapeHtml(archetype.title.toUpperCase())}</span>
             <h3>Ранг ${rank.tier} · ${rank.name}</h3>
           </div>
         </div>
         <div class="bca-rank-progress">
           <div class="bca-rp-meta">
-            <span>${state.profile?.totalXp || 0} XP</span>
-            <span>до следующего ранга: <strong>${rank.remaining} XP</strong></span>
+            <span>${state.profile?.totalXp || 0} XP · ${escapeHtml(archetype.desc)}</span>
+            <span>до ранга: <strong>${rank.remaining} XP</strong></span>
           </div>
           <div class="bca-rp-bar"><span style="width:${rank.pct}%"></span></div>
         </div>
@@ -1706,69 +1822,96 @@ function renderDevelopmentCabinet(state, model, coach, recommended) {
         </div>
       </div>
 
-      <!-- Interactive Anatomical Brain Atlas + Lobe Inspector -->
+      <!-- Daily Neuro-Quests Strip -->
+      <div class="bca-quests-strip">
+        ${quests.map((q) => `
+          <div class="bca-quest ${q.done ? "is-done" : ""}">
+            <div class="bca-q-top">
+              <span>${q.done ? "✓" : "◎"} ${escapeHtml(q.label)}</span>
+              <strong>${q.cur}/${q.max}</strong>
+            </div>
+            <div class="bca-q-bar"><span style="width:${Math.round((q.cur / q.max) * 100)}%"></span></div>
+          </div>
+        `).join("")}
+      </div>
+
+      <!-- Interactive Anatomical Brain Atlas 2.0 + Lobe Inspector -->
       <div class="bca-main-grid">
         <div class="bca-brain-stage">
           <div class="bca-stage-head">
-            <span class="st-label">АНАТОМИЧЕСКИЙ АТЛАС · КЛИКНИ ПО ОТДЕЛУ</span>
-            <span class="bca-focus-pill">УПОР: ${weakestLobe.code} · ${weakestLobe.score}</span>
+            <span class="st-label">АТЛАС МОЗГА 2.0</span>
+            <div class="bca-head-right">
+              <button type="button" class="bca-mode-toggle" id="bcaDeltaToggle" data-mode="score">Прирост 7д (+Δ)</button>
+              <span class="bca-focus-pill">УПОР: ${weakestLobe.code} · ${weakestLobe.score}</span>
+            </div>
           </div>
 
-          <svg class="bca-brain-svg" viewBox="0 0 360 250" role="img" aria-label="Интерактивная карта 5 отделов мозга">
+          <svg class="bca-brain-svg" viewBox="0 0 380 262" role="img" aria-label="Детализированный анатомический атлас 5 отделов мозга">
             <defs>
-              <radialGradient id="cabAura" cx="50%" cy="48%" r="52%">
-                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.20"/>
+              <radialGradient id="cabAura" cx="48%" cy="48%" r="52%">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22"/>
+                <stop offset="60%" stop-color="var(--accent-2)" stop-opacity="0.06"/>
                 <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
               </radialGradient>
             </defs>
-            <ellipse cx="180" cy="122" rx="158" ry="102" fill="url(#cabAura)"/>
-            <circle cx="180" cy="122" r="92" fill="none" stroke="var(--accent)" stroke-opacity="0.10" stroke-dasharray="2 5"/>
+            <ellipse cx="188" cy="126" rx="166" ry="108" fill="url(#cabAura)"/>
+            <circle cx="188" cy="126" r="102" fill="none" stroke="var(--accent)" stroke-opacity="0.10" stroke-dasharray="2 5"/>
 
-            <!-- 1. Prefrontal Cortex (Front-Left) -->
+            <!-- Non-interactive Brainstem & Cerebellum Base -->
+            <path d="M172 194 C174 214 180 232 188 242 L204 240 C198 224 196 208 198 194 Z" fill="rgba(34,211,238,0.06)" stroke="var(--accent)" stroke-opacity="0.28" stroke-width="1.1"/>
+            <path d="M214 176 C244 172 282 180 292 198 C294 214 266 224 234 218 C216 214 208 196 214 176 Z" fill="rgba(34,211,238,0.07)" stroke="var(--accent)" stroke-opacity="0.34" stroke-width="1.2"/>
+            <path d="M224 190 Q254 186 282 194 M222 200 Q252 198 280 206 M228 210 Q252 208 270 214" fill="none" stroke="var(--accent)" stroke-opacity="0.24" stroke-width="0.9"/>
+
+            <!-- 1. Prefrontal Cortex (Frontal Lobe with realistic gyri) -->
             <g class="bca-lobe ${weakestLobe.id === "pfc" ? "is-weak" : strongestLobe.id === "pfc" ? "is-strong" : ""} is-selected" data-lobe="pfc" tabindex="0" role="button">
-              <path d="M72 152 C54 134 52 96 74 68 C94 42 128 32 162 36 L156 116 L96 156 Z" />
-              <circle class="bca-dot" cx="106" cy="88" r="5" />
-              <text x="106" y="74" text-anchor="middle" class="bca-lbl">PFC</text>
-              <text x="106" y="108" text-anchor="middle" class="bca-val">${lobes[0].score}</text>
+              <path d="M68 148 C46 134 42 98 58 68 C74 40 112 24 158 26 C166 26 172 30 170 40 C166 68 164 92 162 112 L114 122 L92 152 C82 154 74 152 68 148 Z" />
+              <path class="bca-gyri" d="M72 82 C92 72 116 74 138 64 M64 112 C86 104 108 106 128 96 M92 48 C114 42 136 44 154 52" />
+              <circle class="bca-dot" cx="108" cy="78" r="5" />
+              <text x="108" y="65" text-anchor="middle" class="bca-lbl">PFC</text>
+              <text x="108" y="97" text-anchor="middle" class="bca-val" data-score="${lobes[0].score}" data-delta="+${lobes[0].delta7d}">${lobes[0].score}</text>
             </g>
 
-            <!-- 2. Parietal Lobe (Top-Back) -->
+            <!-- 2. Parietal Cortex (Superior-Posterior Dome) -->
             <g class="bca-lobe ${weakestLobe.id === "parietal" ? "is-weak" : strongestLobe.id === "parietal" ? "is-strong" : ""}" data-lobe="parietal" tabindex="0" role="button">
-              <path d="M166 36 C214 34 260 54 282 94 L214 124 L160 116 Z" />
-              <circle class="bca-dot" cx="216" cy="74" r="5" />
-              <text x="216" y="60" text-anchor="middle" class="bca-lbl">PAR</text>
-              <text x="216" y="94" text-anchor="middle" class="bca-val">${lobes[2].score}</text>
+              <path d="M174 26 C222 26 268 44 294 82 C298 88 294 96 286 98 L226 118 L166 110 C168 84 170 54 174 26 Z" />
+              <path class="bca-gyri" d="M186 48 C214 48 242 58 264 74 M182 78 C208 76 234 84 256 96" />
+              <circle class="bca-dot" cx="226" cy="68" r="5" />
+              <text x="226" y="55" text-anchor="middle" class="bca-lbl">PAR</text>
+              <text x="226" y="87" text-anchor="middle" class="bca-val" data-score="${lobes[2].score}" data-delta="+${lobes[2].delta7d}">${lobes[2].score}</text>
             </g>
 
-            <!-- 3. Anterior Cingulate Cortex (Core) -->
+            <!-- 3. Anterior Cingulate Cortex (Medial Limbic Arc) -->
             <g class="bca-lobe ${weakestLobe.id === "acc" ? "is-weak" : strongestLobe.id === "acc" ? "is-strong" : ""}" data-lobe="acc" tabindex="0" role="button">
-              <path d="M124 116 C142 92 188 92 210 116 C194 146 150 152 124 116 Z" />
-              <circle class="bca-dot" cx="166" cy="118" r="4" />
-              <text x="166" y="109" text-anchor="middle" class="bca-lbl">ACC</text>
-              <text x="166" y="133" text-anchor="middle" class="bca-val">${lobes[1].score}</text>
+              <path d="M118 122 C138 96 196 94 220 118 C206 144 152 148 118 122 Z" />
+              <circle class="bca-dot" cx="170" cy="116" r="4" />
+              <text x="170" y="108" text-anchor="middle" class="bca-lbl">ACC</text>
+              <text x="170" y="131" text-anchor="middle" class="bca-val" data-score="${lobes[1].score}" data-delta="+${lobes[1].delta7d}">${lobes[1].score}</text>
             </g>
 
-            <!-- 4. Hippocampus / Temporal (Lower-Mid) -->
+            <!-- 4. Hippocampus & Temporal Lobe (Sylvian Temporal Cradle) -->
             <g class="bca-lobe ${weakestLobe.id === "hippo" ? "is-weak" : strongestLobe.id === "hippo" ? "is-strong" : ""}" data-lobe="hippo" tabindex="0" role="button">
-              <path d="M98 158 L158 144 L224 148 C218 182 182 198 142 194 C116 190 102 174 98 158 Z" />
-              <circle class="bca-dot" cx="160" cy="172" r="5" />
-              <text x="160" y="162" text-anchor="middle" class="bca-lbl">HIP</text>
-              <text x="160" y="188" text-anchor="middle" class="bca-val">${lobes[3].score}</text>
+              <path d="M96 156 L154 142 L226 144 C224 178 190 198 144 194 C112 192 94 176 96 156 Z" />
+              <path class="bca-gyri" d="M114 166 C144 160 178 162 206 166" />
+              <circle class="bca-dot" cx="162" cy="168" r="5" />
+              <text x="162" y="158" text-anchor="middle" class="bca-lbl">HIP</text>
+              <text x="162" y="184" text-anchor="middle" class="bca-val" data-score="${lobes[3].score}" data-delta="+${lobes[3].delta7d}">${lobes[3].score}</text>
             </g>
 
-            <!-- 5. Sensorimotor & Visual Speed (Back) -->
+            <!-- 5. Occipital-Motor Visual Speed Network -->
             <g class="bca-lobe ${weakestLobe.id === "motor" ? "is-weak" : strongestLobe.id === "motor" ? "is-strong" : ""}" data-lobe="motor" tabindex="0" role="button">
-              <path d="M218 126 L284 98 C298 128 292 164 266 184 C248 196 226 196 218 182 L226 146 Z" />
-              <circle class="bca-dot" cx="258" cy="148" r="5" />
-              <text x="258" y="136" text-anchor="middle" class="bca-lbl">SPD</text>
-              <text x="258" y="166" text-anchor="middle" class="bca-val">${lobes[4].score}</text>
+              <path d="M230 122 L296 100 C316 126 312 160 286 178 C266 190 238 184 230 168 L230 144 Z" />
+              <path class="bca-gyri" d="M248 128 C268 126 286 134 296 148" />
+              <circle class="bca-dot" cx="268" cy="140" r="5" />
+              <text x="268" y="128" text-anchor="middle" class="bca-lbl">SPD</text>
+              <text x="268" y="158" text-anchor="middle" class="bca-val" data-score="${lobes[4].score}" data-delta="+${lobes[4].delta7d}">${lobes[4].score}</text>
             </g>
 
-            <!-- Synaptic impulse lines linking lobes -->
-            <path class="lb-synapse" d="M106 88 Q160 66 216 74" fill="none"/>
-            <path class="lb-synapse" d="M106 88 Q138 112 166 122" fill="none" style="--d:0.6s"/>
-            <path class="lb-synapse" d="M166 122 Q212 134 258 148" fill="none" style="--d:1.2s"/>
-            <path class="lb-synapse" d="M160 172 Q208 164 258 148" fill="none" style="--d:1.8s"/>
+            <!-- Glowing White-Matter Connectome Tracts -->
+            <path class="lb-synapse" d="M108 78 Q166 54 226 68" fill="none"/>
+            <path class="lb-synapse" d="M108 78 Q140 104 170 116" fill="none" style="--d:0.5s"/>
+            <path class="lb-synapse" d="M170 116 Q220 126 268 140" fill="none" style="--d:1.0s"/>
+            <path class="lb-synapse" d="M162 168 Q216 160 268 140" fill="none" style="--d:1.5s"/>
+            <path class="lb-synapse" d="M108 78 Q128 130 162 168" fill="none" style="--d:2.0s"/>
           </svg>
 
           <div class="bca-lobe-tabs" id="bcaLobeTabs">
@@ -2063,6 +2206,16 @@ export function renderPageProgress(refs, state, handlers) {
     });
     atlas.querySelectorAll("[data-lobe-tab]").forEach((el) => {
       el.addEventListener("click", () => selectLobe(el.dataset.lobeTab));
+    });
+    const deltaToggle = atlas.querySelector("#bcaDeltaToggle");
+    deltaToggle?.addEventListener("click", () => {
+      const showingDelta = deltaToggle.dataset.mode === "delta";
+      deltaToggle.dataset.mode = showingDelta ? "score" : "delta";
+      deltaToggle.classList.toggle("is-active", !showingDelta);
+      deltaToggle.textContent = showingDelta ? "Прирост 7д (+Δ)" : "Текущий тонус";
+      atlas.querySelectorAll(".bca-val").forEach((txt) => {
+        txt.textContent = showingDelta ? txt.dataset.score : txt.dataset.delta;
+      });
     });
     selectLobe(weakId);
   }
@@ -2736,6 +2889,13 @@ export function renderDrillShell(refs, state, mode, content, sideHtml = "") {
             <div><span id="roundSignal">готов</span><small>сигнал</small></div>
           </div>
         </div>
+        <div class="overdrive-bar-wrap" aria-label="Шкала состояния потока Synapse Overdrive">
+          <div class="od-head">
+            <span class="od-kicker">SYNAPSE FLOW</span>
+            <strong class="od-mult" id="overdriveLabel" data-tier="0">×1.0</strong>
+          </div>
+          <div class="od-track"><span class="od-fill" id="overdriveFill" style="width:0%"></span></div>
+        </div>
         <div class="task-title">
           <div>
             <h3>${meta.title}</h3>
@@ -2901,8 +3061,13 @@ export function renderResult(refs, result, state, handlers) {
           <strong class="rbi-lobe">🧠 ${escapeHtml(brainTag.lobe)}</strong>
           <p class="rbi-why">${escapeHtml(brainTag.why)}</p>
         </div>
-        <div class="rbi-chips">${domainGains}</div>
+        <div class="rbi-chips">
+          ${result.overdriveBonus ? `<span class="rbi-chip"><strong>⚡ OVERDRIVE</strong><em>+${result.overdriveBonus} XP</em></span>` : ""}
+          ${domainGains}
+        </div>
       </div>
+
+      ${renderRoundTelemetryTimeline(result.trials)}
 
       <div class="analysis-block">
         <div class="analysis-header">
@@ -3593,44 +3758,92 @@ function formatRt(rt) {
   return `${Math.round(rt)}ms`;
 }
 
+function renderRoundTelemetryTimeline(trials) {
+  if (!Array.isArray(trials) || trials.length < 3) return "";
+  const w = 560;
+  const h = 76;
+  const padX = 18;
+  const padY = 14;
+  const maxRt = Math.max(800, ...trials.map((t) => Math.min(3500, t.rt || 600)));
+  const minRt = Math.min(220, ...trials.map((t) => t.rt || 400));
+  const stepX = (w - padX * 2) / Math.max(1, trials.length - 1);
+  const pts = trials.map((t, i) => {
+    const clamped = Math.min(3500, Math.max(minRt, t.rt || 600));
+    const norm = (clamped - minRt) / Math.max(120, maxRt - minRt);
+    const x = padX + i * stepX;
+    const y = padY + norm * (h - padY * 2);
+    return { x, y, hit: t.hit, streak: t.streak, rt: t.rt };
+  });
+  const dPath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const flowCount = trials.filter((t) => t.streak >= 3).length;
+
+  return `
+    <div class="round-telemetry-card">
+      <div class="rtc-head">
+        <span class="st-label">ТЕЛЕМЕТРИЯ РАУНДА · ПОШАГОВЫЙ ТАЙМЛАЙН ОТКЛИКА</span>
+        <span class="rtc-meta">Ходов в потоке: <strong>${flowCount}/${trials.length}</strong> (выше — быстрее)</span>
+      </div>
+      <svg class="rtc-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Таймлайн реакции по ходам">
+        <line x1="${padX}" y1="${h / 2}" x2="${w - padX}" y2="${h / 2}" stroke="var(--line-strong)" stroke-dasharray="3 4"/>
+        <path d="${dPath}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-opacity="0.75"/>
+        ${pts.map((p, idx) => `
+          <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.streak >= 5 ? 4.4 : 3.4}"
+            fill="${p.hit ? (p.streak >= 5 ? "#2dd4bf" : "#22d3ee") : "#fb7185"}">
+            <title>Ход ${idx + 1}: ${p.rt} мс · ${p.hit ? "верно" : "ошибка"}</title>
+          </circle>
+        `).join("")}
+      </svg>
+    </div>
+  `;
+}
+
 function roundMicroGoal(mode) {
   const goals = {
     nback: "удерживай два потока", grid: "восстанови маршрут мысленно", focus: "переключай правило", logic: "ищи правило, не угадывай",
-    recall: "вспомни до подсказки", scan: "сканируй по траектории", rotate: "поверни образ целиком",
+    recall: "вспомни и выбери ответ", scan: "сканируй по траектории", rotate: "поверни образ целиком",
     reaction: "ждать сигнала", trail: "1-А-2-Б-3-В", stroop: "цвет важнее слова", anback: "слушай, сравнивай с n назад",
-    math: "счёт в уме, выбери или введи", schulte: "смотри в центр, ищи периферией", antisaccade: "посмотри на противоположную сторону",
+    math: "счёт в уме, кликни ответ", schulte: "смотри в центр, ищи периферией", antisaccade: "посмотри на противоположную сторону",
     rsvp: "слова мелькают по одному", stopsig: "● — жми, ■ — стоп",
-    flanker: "только ЦЕНТРАЛЬНАЯ стрелка", bspan: "повтори в ОБРАТНОМ порядке", vfluency: "уникальные слова из категории",
+    flanker: "только ЦЕНТРАЛЬНАЯ стрелка", bspan: "повтори в ОБРАТНОМ порядке", vfluency: "кликай слова из категории",
     tower: "минимум ходов до цели", dsst: "найди символ по цифре",
+    evault: "запоминай и отмечай слова", rulehunt: "адаптируйся к смене правила",
+    synpath: "восстанови синаптический луч", qpattern: "разгадай 3×3 матрицу",
+    orbit: "держи цели периферийным фокусом", chrono: "попади точно в скрытый такт",
   };
-  return goals[mode] || "держи точность";
+  return goals[mode] || "держи точность и поток";
 }
 
 function actionHint(mode) {
   const hints = {
-    nback: { what: "ЗАПОМИНАЙ две вещи: где загорелось и какая буква", action: "когда повторится через N шагов — нажми Match" },
-    grid: { what: "СМОТРИ как клетки вспыхивают по очереди", action: "потом тапни их в ТОМ ЖЕ порядке" },
-    bspan: { what: "СМОТРИ как клетки вспыхивают по очереди", action: "потом тапни в ОБРАТНОМ порядке" },
-    focus: { what: "ПРАВИЛО сверху: ЦВЕТ или СЛОВО", action: "выбери кнопку по правилу — игнорируй конфликт" },
-    stroop: { what: "СЛОВО написано цветом", action: "выбери ЦВЕТ ШРИФТА (не значение слова)" },
-    flanker: { what: "5 стрелок в ряд", action: "нажми по направлению ЦЕНТРАЛЬНОЙ (← / → клавиши)" },
-    logic: { what: "паттерн с пропуском", action: "найди правило и выбери продолжение" },
-    recall: { what: "вопрос — попробуй ВСПОМНИТЬ", action: "введи или скажи голосом, потом оцени себя честно" },
-    scan: { what: "цель — символ сверху", action: "найди его в сетке и кликни" },
-    rotate: { what: "ОРИГИНАЛ сверху", action: "выбери ту фигуру, что совпадает после поворота" },
-    reaction: { what: "ЖДИ зелёный «GO»", action: "жми СРАЗУ. На «СТОП» — НЕ жми" },
-    trail: { what: "узлы 1-9 и А-К разбросаны", action: "соединяй: 1 → А → 2 → Б → 3 → В …" },
-    anback: { what: "СЛУШАЙ — буквы звучат", action: "если повторилась через n шагов — «Match»" },
-    math: { what: "пример в центре", action: "кликни верный вариант (или 1-4 на клавиатуре)" },
-    schulte: { what: "сетка с числами 1-25", action: "СМОТРИ в центр. Кликни 1, потом 2, потом 3 …" },
-    antisaccade: { what: "СМОТРИ на «+» в центре", action: "мигнёт сторона → выбери букву С ПРОТИВОПОЛОЖНОЙ" },
-    rsvp: { what: "слова мелькают по одному", action: "не двигай глазами; потом ответь на вопрос" },
-    stopsig: { what: "зелёный ● или красный ■", action: "● — жми СРАЗУ, ■ — НЕ жми" },
-    vfluency: { what: "категория сверху, 60 сек", action: "печатай слова — по одному на строке или через запятую" },
-    tower: { what: "шарики слева, цель справа", action: "тап колонку → возьми верх; тап другую → положи. Минимум ходов" },
-    dsst: { what: "ключ сверху: 9 пар цифра→символ", action: "найди символ для текущей цифры, кликни вариант" },
+    nback: { what: "ЗАПОМИНАЙ две вещи: позицию и букву", action: "совпало с N шагов назад — кликни Позиция / Символ / Оба" },
+    grid: { what: "СМОТРИ как клетки вспыхивают по очереди", action: "повтори маршрут кликами в ТОМ ЖЕ порядке" },
+    bspan: { what: "СМОТРИ как клетки вспыхивают по очереди", action: "повтори маршрут в ОБРАТНОМ порядке" },
+    focus: { what: "ПРАВИЛО сверху: ЦВЕТ или СЛОВО", action: "выбери кнопку по активному правилу" },
+    stroop: { what: "СЛОВО написано цветным шрифтом", action: "кликни ЦВЕТ ШРИФТА, игнорируя текст" },
+    flanker: { what: "5 стрелок в ряд", action: "кликни направление ЦЕНТРАЛЬНОЙ стрелки" },
+    logic: { what: "последовательность с пропуском", action: "вычисли закономерность и кликни ответ" },
+    recall: { what: "вопрос карточки FSRS-5", action: "мысленно вспомни и кликни 1 из 4 вариантов" },
+    scan: { what: "целевой символ сверху", action: "быстро найди и кликни все такие символы в сетке" },
+    rotate: { what: "эталонная фигура сверху", action: "выбери ту, что совпадает после вращения" },
+    reaction: { what: "ЖДИ зелёный сигнал «GO»", action: "кликни мгновенно; на «СТОП» — тормози" },
+    trail: { what: "узлы 1–9 и А–К на поле", action: "кликай строго по очереди: 1 → А → 2 → Б …" },
+    anback: { what: "СЛУШАЙ поток букв", action: "совпало с N шагов назад — кликни Match" },
+    math: { what: "арифметическое выражение в центре", action: "посчитай в уме и кликни верную карточку" },
+    schulte: { what: "таблица чисел 1–25", action: "держи взгляд в центре и кликай 1 → 2 → 3 …" },
+    antisaccade: { what: "держи фокус на «+» в центре", action: "вспышка сбоку → распознай цель на ПРОТИВОПОЛОЖНОЙ стороне" },
+    rsvp: { what: "скоростной поток слов в одной точке", action: "читай без саккад и выбери точный ответ" },
+    stopsig: { what: "зелёный ● или красный ■", action: "на ● кликай сразу, на ■ — полный стоп" },
+    vfluency: { what: "задана смысловая категория", action: "отметь кликами все подходящие слова за таймер" },
+    tower: { what: "пирамида слева → эталон справа", action: "кликни колонку, чтобы взять диск, и другую — положить" },
+    dsst: { what: "шифр сверху: 9 пар цифра→символ", action: "кликни символ, соответствующий показанной цифре" },
+    evault: { what: "список из 15 слов в 5 фазах", action: "запомни показ и выбирай слова из списка кликами" },
+    rulehunt: { what: "скрытое правило сортировки (цвет/форма/число)", action: "проверяй гипотезу кликом и перестраивайся при смене" },
+    synpath: { what: "по узлам пробегает синаптический импульс", action: "кликни узлы в точном порядке маршрута" },
+    qpattern: { what: "матрица 3×3 со скрытым правилом по строкам/столбцам", action: "выбери недостающую 9-ю плитку из 4 вариантов" },
+    orbit: { what: "несколько сфер вспыхивают и начинают движение", action: "удержи их взглядом и отметь кликами после остановки" },
+    chrono: { what: "4 эталонных импульса задают точный темп", action: "почувствуй интервал и кликни точно в скрытый такт 🎯" },
   };
-  return hints[mode] || { what: "следуй инструкциям drill", action: "удерживай фокус и точность" };
+  return hints[mode] || { what: "сфокусируйся на стимуле в центре", action: "выбирай точный ответ кликом мыши" };
 }
 
 function resultAdvice(result) {

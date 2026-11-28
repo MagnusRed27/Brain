@@ -2040,3 +2040,352 @@ export async function runQuantumPattern(ctx) {
     if (!isAbortError(err)) throw err;
   }
 }
+
+/**
+ * Orbit Track — Multi-Object Tracking (MOT, Pylyshyn & Storm 1988).
+ * Trains parietal-frontal distributed visual attention & spatial working memory.
+ */
+export async function runOrbitTrack(ctx) {
+  const state = ctx.getState();
+  const mode = "orbit";
+  const level = state.levels[mode] || 1;
+  const totalTrials = 6;
+  const totalNodes = Math.min(9, 6 + Math.floor(level / 2));
+  const targetCount = Math.min(4, 2 + Math.floor((level + 1) / 3));
+  const speedBase = 1.35 + Math.min(1.4, level * 0.16);
+
+  renderDrillShell(ctx.refs, state, mode, `
+    <div class="orbit-board">
+      <div class="orbit-status" id="orbitStatus">Приготовься удерживать цели взглядом</div>
+      <div class="orbit-stage" id="orbitStage">
+        <svg class="orbit-bg-svg" viewBox="0 0 460 280" aria-hidden="true">
+          <circle cx="230" cy="140" r="46" fill="none" stroke="var(--accent)" stroke-opacity="0.12" stroke-dasharray="3 5"/>
+          <circle cx="230" cy="140" r="96" fill="none" stroke="var(--accent)" stroke-opacity="0.10" stroke-dasharray="4 6"/>
+          <line x1="230" y1="16" x2="230" y2="264" stroke="var(--accent)" stroke-opacity="0.08"/>
+          <line x1="24" y1="140" x2="436" y2="140" stroke="var(--accent)" stroke-opacity="0.08"/>
+          <circle cx="230" cy="140" r="3" fill="var(--accent)" fill-opacity="0.5"/>
+        </svg>
+        <div class="orbit-nodes-layer" id="orbitNodes"></div>
+      </div>
+      <div class="progress-track"><span id="taskProgress"></span></div>
+    </div>
+  `);
+
+  const statusEl = ctx.refs.arena.querySelector("#orbitStatus");
+  const layerEl = ctx.refs.arena.querySelector("#orbitNodes");
+  ctx.startCountdown(totalTrials * 9);
+
+  const W = 460;
+  const H = 280;
+  const R = 19;
+  let totalHits = 0;
+  let totalTargets = 0;
+  let mistakes = 0;
+  let totalRt = 0;
+  let rafId = 0;
+
+  ctx.signal.addEventListener("abort", () => {
+    if (rafId) window.cancelAnimationFrame(rafId);
+  }, { once: true });
+
+  try {
+    for (let t = 0; t < totalTrials; t += 1) {
+      if (!ctx.isCurrent()) return;
+
+      // Spawn non-overlapping nodes
+      const nodes = [];
+      for (let i = 0; i < totalNodes; i += 1) {
+        let x = 60 + Math.random() * (W - 120);
+        let y = 50 + Math.random() * (H - 100);
+        for (let guard = 0; guard < 25; guard += 1) {
+          if (nodes.every((n) => Math.hypot(n.x - x, n.y - y) > R * 2.5)) break;
+          x = 60 + Math.random() * (W - 120);
+          y = 50 + Math.random() * (H - 100);
+        }
+        const angle = Math.random() * Math.PI * 2;
+        nodes.push({
+          id: i,
+          isTarget: i < targetCount,
+          x,
+          y,
+          vx: Math.cos(angle) * speedBase,
+          vy: Math.sin(angle) * speedBase,
+        });
+      }
+
+      layerEl.innerHTML = nodes.map((n) => `
+        <button type="button" class="orbit-orb ${n.isTarget ? "is-cue" : ""}" data-oid="${n.id}" disabled aria-label="Сфера ${n.id + 1}">
+          <span class="orbit-orb-core"></span>
+        </button>
+      `).join("");
+
+      const els = nodes.map((_, i) => layerEl.querySelector(`[data-oid="${i}"]`));
+      const syncPositions = () => {
+        nodes.forEach((n, i) => {
+          const leftPct = (n.x / W) * 100;
+          const topPct = (n.y / H) * 100;
+          els[i].style.left = `${leftPct.toFixed(2)}%`;
+          els[i].style.top = `${topPct.toFixed(2)}%`;
+        });
+      };
+      syncPositions();
+
+      // Phase 1: Cue targets
+      statusEl.textContent = `Раунд ${t + 1}/${totalTrials} · Запомни ${targetCount} подсвеченные сферы`;
+      ctx.sensory.cue("round-start");
+      await sleepSignal(1650, ctx.signal);
+      if (!ctx.isCurrent()) return;
+
+      // Phase 2: Hide cue & move smoothly
+      els.forEach((el) => el.classList.remove("is-cue"));
+      statusEl.textContent = "Удерживай их вниманием · Смотри в центр радара";
+      const moveDuration = 3300 + Math.min(1500, level * 180);
+      await new Promise((resolve) => {
+        const startMove = performance.now();
+        function step(now) {
+          if (ctx.signal.aborted) { resolve(); return; }
+          for (let i = 0; i < nodes.length; i += 1) {
+            const a = nodes[i];
+            a.x += a.vx;
+            a.y += a.vy;
+            if (a.x < 34 || a.x > W - 34) { a.vx *= -1; a.x = Math.max(34, Math.min(W - 34, a.x)); }
+            if (a.y < 34 || a.y > H - 34) { a.vy *= -1; a.y = Math.max(34, Math.min(H - 34, a.y)); }
+            for (let j = i + 1; j < nodes.length; j += 1) {
+              const b = nodes[j];
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const dist = Math.hypot(dx, dy);
+              if (dist > 0 && dist < R * 2.15) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                const overlap = (R * 2.15 - dist) * 0.5;
+                a.x -= nx * overlap;
+                a.y -= ny * overlap;
+                b.x += nx * overlap;
+                b.y += ny * overlap;
+                const dvx = a.vx - b.vx;
+                const dvy = a.vy - b.vy;
+                const dot = dvx * nx + dvy * ny;
+                if (dot > 0) {
+                  a.vx -= dot * nx;
+                  a.vy -= dot * ny;
+                  b.vx += dot * nx;
+                  b.vy += dot * ny;
+                }
+              }
+            }
+          }
+          syncPositions();
+          if (now - startMove < moveDuration) {
+            rafId = window.requestAnimationFrame(step);
+          } else {
+            resolve();
+          }
+        }
+        rafId = window.requestAnimationFrame(step);
+      });
+      if (!ctx.isCurrent()) return;
+
+      // Phase 3: Click tracked targets
+      let picksLeft = targetCount;
+      let trialHits = 0;
+      statusEl.textContent = `Кликни по ${targetCount} целевым сферам`;
+      const pickStart = performance.now();
+
+      await new Promise((resolve) => {
+        els.forEach((btn, idx) => {
+          btn.disabled = false;
+          btn.classList.add("is-pickable");
+          btn.addEventListener("click", () => {
+            if (btn.disabled || picksLeft <= 0) return;
+            btn.disabled = true;
+            picksLeft -= 1;
+            const node = nodes[idx];
+            if (node.isTarget) {
+              trialHits += 1;
+              totalHits += 1;
+              btn.classList.add("is-hit");
+              ctx.feedback(true, `цель ${trialHits}/${targetCount}`);
+            } else {
+              mistakes += 1;
+              btn.classList.add("is-miss");
+              ctx.feedback(false, "промах");
+            }
+            if (picksLeft <= 0) {
+              totalRt += (performance.now() - pickStart) / targetCount;
+              els.forEach((b, j) => {
+                b.disabled = true;
+                if (nodes[j].isTarget && !b.classList.contains("is-hit")) {
+                  b.classList.add("is-missed-target");
+                }
+              });
+              window.setTimeout(resolve, 560);
+            }
+          }, { once: true });
+        });
+        ctx.signal.addEventListener("abort", resolve, { once: true });
+      });
+
+      totalTargets += targetCount;
+      ctx.setProgress(((t + 1) / totalTrials) * 100);
+    }
+
+    const accuracy = totalTargets ? totalHits / totalTargets : 0;
+    const avgRt = totalTrials ? totalRt / totalTrials : 0;
+    const xp = Math.round(24 + accuracy * 44 + level * 3);
+    ctx.finish(makeResult(mode, accuracy, xp, mistakes, level, avgRt));
+  } catch (err) {
+    if (!isAbortError(err)) throw err;
+  }
+}
+
+/**
+ * Chrono Pulse — Internal Interval Timing Synchronization (Ivry & Spencer 2004).
+ * Entrains prefrontal-cerebellar temporal prediction: 4 reference beats -> silent gap -> click on target beat.
+ */
+export async function runChronoPulse(ctx) {
+  const state = ctx.getState();
+  const mode = "chrono";
+  const level = state.levels[mode] || 1;
+  const totalTrials = 7;
+  const toleranceMs = Math.max(95, 195 - level * 10);
+
+  renderDrillShell(ctx.refs, state, mode, `
+    <div class="chrono-board">
+      <div class="chrono-status" id="chronoStatus">Поймай внутренний ритм импульсов</div>
+      <div class="chrono-beats" id="chronoBeats"></div>
+      <div class="chrono-ring-wrap">
+        <button type="button" class="chrono-pad" id="chronoPad" disabled>
+          <span class="chrono-pad-ring" aria-hidden="true"></span>
+          <strong id="chronoPadMain">СЛУШАЙ</strong>
+          <small id="chronoPadSub">эталонный темп</small>
+        </button>
+      </div>
+      <div class="chrono-delta" id="chronoDelta">Допуск точности: ±${toleranceMs} мс</div>
+      <div class="progress-track"><span id="taskProgress"></span></div>
+    </div>
+  `);
+
+  const statusEl = ctx.refs.arena.querySelector("#chronoStatus");
+  const beatsEl = ctx.refs.arena.querySelector("#chronoBeats");
+  const padEl = ctx.refs.arena.querySelector("#chronoPad");
+  const padMain = ctx.refs.arena.querySelector("#chronoPadMain");
+  const padSub = ctx.refs.arena.querySelector("#chronoPadSub");
+  const deltaEl = ctx.refs.arena.querySelector("#chronoDelta");
+  ctx.startCountdown(totalTrials * 7);
+
+  let hits = 0;
+  let mistakes = 0;
+  let totalAbsErr = 0;
+
+  try {
+    for (let t = 0; t < totalTrials; t += 1) {
+      if (!ctx.isCurrent()) return;
+      const intervalMs = randomInt(540, 780);
+      const refCount = 4;
+      const hiddenBeats = level >= 4 && t % 2 === 1 ? 2 : 1;
+      const totalBeats = refCount + hiddenBeats;
+
+      beatsEl.innerHTML = Array.from({ length: totalBeats }, (_, i) => {
+        const isTarget = i === totalBeats - 1;
+        const isBlind = i >= refCount && !isTarget;
+        return `<span class="chrono-dot ${isTarget ? "is-target" : isBlind ? "is-blind" : ""}">${isTarget ? "🎯" : i + 1}</span>`;
+      }).join("");
+      const dotEls = [...beatsEl.querySelectorAll(".chrono-dot")];
+
+      padEl.disabled = true;
+      padEl.className = "chrono-pad is-listening";
+      padMain.textContent = "РИТМ";
+      padSub.textContent = `${intervalMs} мс такт`;
+      statusEl.textContent = `Серия ${t + 1}/${totalTrials} · Улови ${refCount} импульса и кликни точно на 🎯`;
+
+      await sleepSignal(420, ctx.signal);
+      const t0 = performance.now();
+
+      for (let b = 0; b < refCount; b += 1) {
+        if (!ctx.isCurrent()) return;
+        dotEls[b].classList.add("is-lit");
+        padEl.classList.remove("is-pulse");
+        void padEl.offsetWidth;
+        padEl.classList.add("is-pulse");
+        ctx.sensory.cue(b === 0 ? "metronome-acc" : "metronome");
+        const targetNext = t0 + (b + 1) * intervalMs;
+        const waitMs = Math.max(40, targetNext - performance.now());
+        if (b < refCount - 1) {
+          await sleepSignal(waitMs, ctx.signal);
+        }
+      }
+      if (!ctx.isCurrent()) return;
+
+      const lastRefAt = t0 + (refCount - 1) * intervalMs;
+      const expectedAt = lastRefAt + hiddenBeats * intervalMs;
+
+      padEl.disabled = false;
+      padEl.className = "chrono-pad is-armed";
+      padMain.textContent = "СИНХРО!";
+      padSub.textContent = hiddenBeats === 2 ? "пропусти 1 такт → кликни на 6-й" : "кликни точно в 5-й такт";
+
+      await new Promise((resolve) => {
+        let settled = false;
+        const timeoutId = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          padEl.disabled = true;
+          mistakes += 1;
+          totalAbsErr += toleranceMs * 1.8;
+          padEl.className = "chrono-pad is-miss";
+          padMain.textContent = "ПОЗДНО";
+          padSub.textContent = "пропущен такт";
+          deltaEl.textContent = "Слишком поздно · доверься внутреннему метроному";
+          ctx.feedback(false, "пропуск такта");
+          window.setTimeout(resolve, 560);
+        }, hiddenBeats * intervalMs + 650);
+
+        const onTap = () => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          padEl.disabled = true;
+          const tapAt = performance.now();
+          const signedErr = Math.round(tapAt - expectedAt);
+          const absErr = Math.abs(signedErr);
+          totalAbsErr += absErr;
+          dotEls[dotEls.length - 1].classList.add("is-lit");
+          const ok = absErr <= toleranceMs;
+          const signStr = signedErr >= 0 ? `+${signedErr}` : `${signedErr}`;
+          if (ok) {
+            hits += 1;
+            padEl.className = "chrono-pad is-hit";
+            padMain.textContent = `${signStr} мс`;
+            padSub.textContent = absErr <= 35 ? "снайперский тайминг!" : "внутри окна синхро";
+            deltaEl.textContent = `Отклонение ${signStr} мс (допуск ±${toleranceMs} мс)`;
+            ctx.feedback(true, `${signStr} мс`);
+          } else {
+            mistakes += 1;
+            padEl.className = "chrono-pad is-miss";
+            padMain.textContent = `${signStr} мс`;
+            padSub.textContent = signedErr < 0 ? "слишком рано" : "слишком поздно";
+            deltaEl.textContent = `Отклонение ${signStr} мс — целься ровнее (допуск ±${toleranceMs} мс)`;
+            ctx.feedback(false, `${signStr} мс`);
+          }
+          window.setTimeout(resolve, 620);
+        };
+
+        padEl.addEventListener("click", onTap, { once: true });
+        ctx.signal.addEventListener("abort", () => {
+          window.clearTimeout(timeoutId);
+          resolve();
+        }, { once: true });
+      });
+
+      ctx.setProgress(((t + 1) / totalTrials) * 100);
+    }
+
+    const accuracy = hits / totalTrials;
+    const meanAbsErr = Math.round(totalAbsErr / totalTrials);
+    const xp = Math.round(22 + accuracy * 42 + level * 3);
+    ctx.finish(makeResult(mode, accuracy, xp, mistakes, level, meanAbsErr));
+  } catch (err) {
+    if (!isAbortError(err)) throw err;
+  }
+}
