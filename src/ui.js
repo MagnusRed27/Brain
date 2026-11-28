@@ -286,46 +286,53 @@ function renderLivingBrainSvg(domains = {}, overall = 41, readiness = 72) {
     spatial: Math.round(domains.spatial ?? 39),
   };
   const nodes = [
-    { id: "focus",   label: "Внимание", x: 76,  y: 66,  val: d.focus,   mode: "stroop" },
-    { id: "wm",      label: "Раб. память", x: 118, y: 46, val: d.wm,   mode: "nback" },
-    { id: "logic",   label: "Логика",   x: 162, y: 66,  val: d.logic,   mode: "logic" },
-    { id: "memory",  label: "Память",   x: 146, y: 112, val: d.memory,  mode: "recall" },
-    { id: "spatial", label: "Образы",   x: 190, y: 104, val: d.spatial, mode: "rotate" },
-    { id: "speed",   label: "Скорость", x: 96,  y: 114, val: d.speed,   mode: "reaction" },
+    { id: "focus",   label: "Внимание", x: 74,  y: 66,  val: d.focus,   mode: "stroop" },
+    { id: "wm",      label: "Раб. память", x: 118, y: 42, val: d.wm,   mode: "nback" },
+    { id: "logic",   label: "Логика",   x: 168, y: 64,  val: d.logic,   mode: "logic" },
+    { id: "memory",  label: "Память",   x: 148, y: 110, val: d.memory,  mode: "recall" },
+    { id: "spatial", label: "Образы",   x: 192, y: 98,  val: d.spatial, mode: "rotate" },
+    { id: "speed",   label: "Скорость", x: 96,  y: 112, val: d.speed,   mode: "reaction" },
   ];
-  const links = [
-    [0, 1], [1, 2], [2, 4], [4, 3], [3, 5], [5, 0],
-    [0, 3], [1, 3], [1, 5], [2, 3],
+  const curves = [
+    "M74 66 Q96 44 118 42",
+    "M118 42 Q146 42 168 64",
+    "M168 64 Q188 76 192 98",
+    "M192 98 Q174 116 148 110",
+    "M148 110 Q122 120 96 112",
+    "M96 112 Q74 94 74 66",
+    "M74 66 Q116 84 148 110",
+    "M118 42 Q128 76 148 110",
+    "M118 42 Q102 76 96 112",
+    "M168 64 Q152 88 148 110",
   ];
   return `
     <div class="living-brain-widget">
       <div class="lb-head">
-        <span class="lb-kicker">Живая карта мозга</span>
+        <span class="lb-kicker">Нейронная карта</span>
         <span class="lb-ready">готовность ${readiness}%</span>
       </div>
-      <svg class="living-brain-svg" viewBox="0 0 240 168" role="img" aria-label="Интерактивная нейронная карта 6 зон мозга">
+      <svg class="living-brain-svg" viewBox="0 0 248 164" role="img" aria-label="Интерактивная нейронная карта 6 зон мозга">
         <defs>
-          <radialGradient id="brainGlow" cx="50%" cy="48%" r="52%">
-            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22"/>
-            <stop offset="65%" stop-color="var(--accent-2)" stop-opacity="0.08"/>
+          <radialGradient id="brainAura" cx="50%" cy="48%" r="50%">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.20"/>
+            <stop offset="55%" stop-color="var(--accent-2)" stop-opacity="0.06"/>
             <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <ellipse cx="126" cy="84" rx="96" ry="66" fill="url(#brainGlow)"/>
-        <!-- Organic stylized brain silhouette -->
-        <path class="lb-silhouette" d="M68 118 C46 114 38 92 46 72 C50 54 68 42 88 38 C102 26 128 24 148 32 C170 30 192 44 198 66 C210 78 208 102 194 114 C182 126 164 128 148 124 C140 134 128 142 122 150 C118 140 112 132 106 128 C90 130 76 126 68 118 Z" />
-        <path class="lb-fold" d="M84 56 C96 64 106 62 118 58 M132 48 C144 58 158 58 172 54 M70 88 C86 84 102 90 116 98 M136 86 C152 82 168 86 184 94 M114 74 C122 86 128 96 134 110" />
-        <!-- Synaptic pathways -->
-        ${links.map(([a, b], idx) => {
-          const na = nodes[a], nb = nodes[b];
-          return `<line class="lb-synapse" x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" style="--d:${(idx * 0.35).toFixed(2)}s" />`;
-        }).join("")}
-        <!-- Interactive domain nodes -->
+        <ellipse cx="128" cy="82" rx="108" ry="68" fill="url(#brainAura)"/>
+        <!-- Delicate layered orbital rings -->
+        <ellipse cx="128" cy="82" rx="94" ry="56" fill="none" stroke="var(--line)" stroke-width="0.8" stroke-dasharray="2 4"/>
+        <!-- Fine anatomical cortex contour -->
+        <path class="lb-silhouette" d="M66 116 C44 110 38 86 48 66 C54 48 72 36 92 32 C108 20 136 18 156 28 C178 28 200 44 206 66 C216 80 212 104 196 116 C182 126 164 128 148 124 C140 134 128 142 122 150 C118 140 112 132 106 128 C90 128 76 122 66 116 Z" />
+        <path class="lb-fold" d="M80 54 C96 62 110 60 124 52 M138 44 C154 54 168 54 182 48 M68 86 C86 82 104 88 118 96 M140 84 C156 80 174 84 190 92" />
+        <!-- Flowing curved synaptic pathways -->
+        ${curves.map((pathD, idx) => `<path class="lb-synapse" d="${pathD}" fill="none" style="--d:${(idx * 0.35).toFixed(2)}s" />`).join("")}
+        <!-- Interactive domain constellation nodes -->
         ${nodes.map((n, idx) => {
-          const r = 5.5 + (Math.min(100, Math.max(20, n.val)) / 100) * 4.5;
+          const r = 4.2 + (Math.min(100, Math.max(20, n.val)) / 100) * 3.2;
           return `
             <g class="lb-node" data-center-mode="${n.mode}" style="--d:${(idx * 0.4).toFixed(2)}s" tabindex="0" role="button" aria-label="${n.label}: ${n.val}">
-              <circle class="lb-node-halo" cx="${n.x}" cy="${n.y}" r="${(r + 6).toFixed(1)}" />
+              <circle class="lb-node-halo" cx="${n.x}" cy="${n.y}" r="${(r + 6.5).toFixed(1)}" />
               <circle class="lb-node-core" cx="${n.x}" cy="${n.y}" r="${r.toFixed(1)}" />
               <title>${n.label} — ${n.val}/100 (клик для тренировки)</title>
             </g>

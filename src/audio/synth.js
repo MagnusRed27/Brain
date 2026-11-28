@@ -1,3 +1,9 @@
+/**
+ * Silky acoustic micro-SFX synthesizer:
+ * Soft wooden marimba taps, warm felt-piano intervals, gentle singing-bowl chimes.
+ * Zero sawtooth, zero square waves, zero shrill FM screeches.
+ */
+
 const NOTE = {
   C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.0, A3: 220.0, B3: 246.94,
   C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.0, A4: 440.0, B4: 493.88,
@@ -6,82 +12,84 @@ const NOTE = {
 };
 
 export const PRESETS = {
-  "hit-soft":      { wave: "sine",     freq: NOTE.E5, glide: NOTE.B5, dur: 0.18, amp: 0.18, fm: 0.0,  pan: 0,    filter: 8200, decay: 0.4 },
-  "hit-crisp":     { wave: "triangle", freq: NOTE.G5, glide: NOTE.D6, dur: 0.16, amp: 0.22, fm: 0.4,  pan: 0,    filter: 9800, decay: 0.5 },
-  "streak":        { wave: "sine",     freq: NOTE.A5, glide: NOTE.E6, dur: 0.24, amp: 0.22, fm: 0.2,  pan: 0,    filter: 9200, decay: 0.6 },
-  "combo":         { wave: "sine",     freq: NOTE.C5, glide: NOTE.G6, dur: 0.32, amp: 0.26, fm: 0.6,  pan: 0,    filter: 11000, decay: 0.8 },
-  "miss-near":     { wave: "triangle", freq: NOTE.E4, glide: NOTE.C4, dur: 0.22, amp: 0.2,  fm: 0.5,  pan: 0,    filter: 2400, decay: 0.5 },
-  "miss-bad":      { wave: "sawtooth", freq: NOTE.A3, glide: NOTE.F3, dur: 0.28, amp: 0.22, fm: 0.9,  pan: 0,    filter: 1400, decay: 0.6 },
-  "level-up":      { wave: "sine",     freq: NOTE.C5, glide: NOTE.C6, dur: 0.5,  amp: 0.28, fm: 0.3,  pan: 0,    filter: 10400, decay: 1.2 },
-  "round-start":   { wave: "sine",     freq: NOTE.G4, glide: NOTE.D5, dur: 0.34, amp: 0.22, fm: 0.15, pan: 0,    filter: 6800, decay: 0.9 },
-  "round-end":     { wave: "sine",     freq: NOTE.D5, glide: NOTE.A4, dur: 0.44, amp: 0.2,  fm: 0.1,  pan: 0,    filter: 5600, decay: 1.1 },
-  "recall-flip":   { wave: "triangle", freq: NOTE.E5, glide: NOTE.A5, dur: 0.22, amp: 0.18, fm: 0.3,  pan: 0,    filter: 7400, decay: 0.5 },
-  "recall-reveal": { wave: "sine",     freq: NOTE.C6, glide: NOTE.G5, dur: 0.38, amp: 0.22, fm: 0.25, pan: 0,    filter: 8800, decay: 0.9 },
-  "metronome":     { wave: "square",   freq: NOTE.A5, glide: NOTE.A5, dur: 0.05, amp: 0.16, fm: 0.0,  pan: 0,    filter: 3600, decay: 0.06 },
-  "metronome-acc": { wave: "square",   freq: NOTE.E6, glide: NOTE.E6, dur: 0.07, amp: 0.22, fm: 0.0,  pan: 0,    filter: 5200, decay: 0.08 },
-  "breath-in":     { wave: "sine",     freq: NOTE.A3, glide: NOTE.E4, dur: 4.0,  amp: 0.12, fm: 0.05, pan: 0,    filter: 1800, decay: 4.0 },
-  "breath-out":    { wave: "sine",     freq: NOTE.E4, glide: NOTE.A3, dur: 4.0,  amp: 0.12, fm: 0.05, pan: 0,    filter: 1600, decay: 4.0 },
+  "hit-soft":      { notes: [NOTE.D4],                       dur: 0.14, amp: 0.14, filter: 1100, decay: 0.18, attack: 0.008 },
+  "hit-crisp":     { notes: [NOTE.F4, NOTE.A4],              dur: 0.14, amp: 0.15, filter: 1350, decay: 0.20, attack: 0.007 },
+  "streak":        { notes: [NOTE.A4, NOTE.D5],              dur: 0.18, amp: 0.15, filter: 1400, decay: 0.28, attack: 0.010, stagger: 0.055 },
+  "combo":         { notes: [NOTE.G4, NOTE.B4, NOTE.D5],     dur: 0.22, amp: 0.16, filter: 1500, decay: 0.36, attack: 0.012, stagger: 0.05 },
+  "miss-near":     { notes: [NOTE.A3],                       dur: 0.14, amp: 0.12, filter: 520,  decay: 0.16, attack: 0.010 },
+  "miss-bad":      { notes: [NOTE.F3],                       dur: 0.18, amp: 0.13, filter: 420,  decay: 0.20, attack: 0.012 },
+  "level-up":      { notes: [NOTE.D4, NOTE.A4, NOTE.D5],     dur: 0.34, amp: 0.16, filter: 1600, decay: 0.55, attack: 0.015, stagger: 0.08 },
+  "round-start":   { notes: [NOTE.D4, NOTE.A4],              dur: 0.28, amp: 0.13, filter: 1150, decay: 0.45, attack: 0.018, stagger: 0.06 },
+  "round-end":     { notes: [NOTE.A4, NOTE.D4],              dur: 0.32, amp: 0.13, filter: 1000, decay: 0.52, attack: 0.018, stagger: 0.09 },
+  "recall-flip":   { notes: [NOTE.E4],                       dur: 0.11, amp: 0.11, filter: 980,  decay: 0.14, attack: 0.008 },
+  "recall-reveal": { notes: [NOTE.G4, NOTE.B4],              dur: 0.20, amp: 0.13, filter: 1250, decay: 0.32, attack: 0.012, stagger: 0.05 },
+  "metronome":     { notes: [NOTE.G4],                       dur: 0.04, amp: 0.08, filter: 780,  decay: 0.04, attack: 0.004 },
+  "metronome-acc": { notes: [NOTE.C5],                       dur: 0.05, amp: 0.10, filter: 980,  decay: 0.05, attack: 0.004 },
+  "breath-in":     { notes: [NOTE.A3, NOTE.E4],              dur: 3.6,  amp: 0.07, filter: 520,  decay: 3.8,  attack: 1.2 },
+  "breath-out":    { notes: [NOTE.E4, NOTE.A3],              dur: 3.6,  amp: 0.07, filter: 460,  decay: 3.8,  attack: 1.0 },
 };
 
 export function playPreset(engine, name, options = {}) {
   const preset = PRESETS[name] || PRESETS["hit-soft"];
   if (!engine.ready()) return;
   const ctx = engine.ctx;
-  const now = ctx.currentTime + 0.005;
-
-  const detune = options.detune ?? (Math.random() * 6 - 3);
-  const jitter = options.jitter ?? (Math.random() * 0.01 - 0.005);
-  const startAt = now + Math.max(0, jitter);
-  const pan = options.pan ?? preset.pan;
+  const baseNow = ctx.currentTime + 0.005;
   const amp = (options.amp ?? preset.amp) * engine.sfxGain();
+  const pan = options.pan ?? 0;
+  const stagger = preset.stagger || 0;
+  const notes = preset.notes || [NOTE.D4];
 
-  const osc = ctx.createOscillator();
-  osc.type = preset.wave;
-  osc.frequency.setValueAtTime(preset.freq, startAt);
-  osc.frequency.exponentialRampToValueAtTime(Math.max(40, preset.glide), startAt + preset.dur);
-  osc.detune.setValueAtTime(detune, startAt);
+  notes.forEach((freq, idx) => {
+    const startAt = baseNow + idx * stagger;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, startAt);
+    osc.detune.setValueAtTime((Math.random() * 4 - 2), startAt);
 
-  let mod = null;
-  if (preset.fm > 0) {
-    mod = ctx.createOscillator();
-    const modGain = ctx.createGain();
-    mod.frequency.setValueAtTime(preset.freq * 0.5, startAt);
-    modGain.gain.setValueAtTime(preset.freq * preset.fm, startAt);
-    mod.connect(modGain).connect(osc.frequency);
-    mod.start(startAt);
-    mod.stop(startAt + preset.dur + 0.05);
-  }
+    // Subtle warm 2nd harmonic (marimba/felt body)
+    const harm = ctx.createOscillator();
+    harm.type = "sine";
+    harm.frequency.setValueAtTime(freq * 2, startAt);
+    const harmGain = ctx.createGain();
+    harmGain.gain.setValueAtTime(0.10, startAt);
+    harmGain.gain.exponentialRampToValueAtTime(0.001, startAt + preset.dur * 0.6);
 
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(preset.filter, startAt);
-  filter.frequency.exponentialRampToValueAtTime(Math.max(180, preset.filter * 0.45), startAt + preset.dur);
-  filter.Q.value = 0.6;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(preset.filter, startAt);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(220, preset.filter * 0.45), startAt + preset.dur + preset.decay);
+    filter.Q.value = 0.4;
 
-  const env = ctx.createGain();
-  const attack = Math.max(0.004, options.attack ?? 0.006);
-  const release = Math.max(0.04, preset.decay * 0.75);
-  env.gain.setValueAtTime(0, startAt);
-  env.gain.linearRampToValueAtTime(amp, startAt + attack);
-  env.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp * 0.4), startAt + preset.dur * 0.55);
-  env.gain.exponentialRampToValueAtTime(0.0001, startAt + preset.dur + release);
+    const env = ctx.createGain();
+    const attack = Math.max(0.004, options.attack ?? preset.attack ?? 0.008);
+    const noteAmp = amp / Math.sqrt(notes.length);
+    env.gain.setValueAtTime(0.0001, startAt);
+    env.gain.linearRampToValueAtTime(noteAmp, startAt + attack);
+    env.gain.exponentialRampToValueAtTime(0.0001, startAt + preset.dur + preset.decay);
 
-  const panner = ctx.createStereoPanner();
-  panner.pan.setValueAtTime(Math.max(-1, Math.min(1, pan)), startAt);
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(Math.max(-1, Math.min(1, pan)), startAt);
 
-  osc.connect(filter).connect(env).connect(panner);
-  panner.connect(engine.dryIn);
-  if (engine.sendIn) {
-    const send = ctx.createGain();
-    send.gain.setValueAtTime(0.34, startAt);
-    panner.connect(send).connect(engine.sendIn);
-  }
+    osc.connect(filter);
+    harm.connect(harmGain).connect(filter);
+    filter.connect(env).connect(panner);
+    panner.connect(engine.dryIn);
 
-  osc.start(startAt);
-  osc.stop(startAt + preset.dur + release + 0.05);
+    if (engine.sendIn) {
+      const send = ctx.createGain();
+      send.gain.setValueAtTime(0.24, startAt);
+      panner.connect(send).connect(engine.sendIn);
+    }
+
+    const stopAt = startAt + preset.dur + preset.decay + 0.06;
+    osc.start(startAt);
+    harm.start(startAt);
+    osc.stop(stopAt);
+    harm.stop(stopAt);
+  });
 
   engine.duck(name);
-  return { stopAt: startAt + preset.dur + release };
+  return { stopAt: baseNow + preset.dur + preset.decay };
 }
 
 export { NOTE };
