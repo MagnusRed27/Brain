@@ -1,4 +1,5 @@
 import "../styles.css";
+import "./studio-theme.css";
 import { DRILL_IDS, MODE_META } from "./config.js";
 import { startDrill } from "./drills.js";
 import { applyRoundResult, getRecommendedPlan } from "./progression.js";

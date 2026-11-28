@@ -135,133 +135,152 @@ export function renderPageCenter(refs, state, handlers) {
   const programTodayDone = program ? isTodayDone(state) : false;
 
   const quickScenarios = [
-    { id: "sprint", icon: "⚡", label: "Спринт", sub: "8 мин · перед задачей" },
-    { id: "adaptive", icon: "🎯", label: "Адаптив", sub: "18 мин · баланс дня" },
-    { id: "memory", icon: "🧠", label: "Память", sub: "18 мин · FSRS-5" },
-    { id: "recovery", icon: "🌙", label: "Перезагрузка", sub: "12 мин · мягкий ритм" },
+    { id: "sprint", code: "01", label: "Спринт", sub: "8 мин · старт" },
+    { id: "adaptive", code: "02", label: "Адаптив", sub: "18 мин · баланс" },
+    { id: "memory", code: "03", label: "Память", sub: "18 мин · FSRS-5" },
+    { id: "recovery", code: "04", label: "Отдых", sub: "12 мин · ритм" },
   ];
 
+  const ticks = Array.from({ length: 10 }, (_, idx) => {
+    const filled = readiness >= (idx + 1) * 10;
+    return `<i class="${filled ? "is-on" : ""}"></i>`;
+  }).join("");
+
   refs.arena.innerHTML = `
-    <div class="center-grid center-prism-v12">
+    <div class="center-grid studio-center">
       ${program ? renderProgramHero(state, programDay, programInfo, programSummary, programTodayDone) : ""}
 
       <div class="center-main">
-        <section class="hero-card v4-hero-card prism-hero-stage" style="--route-accent:${selected.accent}; --route-glow:${selected.accent}33; --hero-backdrop:url(${heroBackdrop})">
-          <div class="prism-hero-top">
-            <div class="prism-hero-copy">
-              <div class="prism-eyebrow-row">
-                <span class="hero-eyebrow">${fatigue.label}</span>
-                <span class="prism-session-pill">${todayRounds.length ? `${todayRounds.length} ${pluralRu(todayRounds.length, ["раунд", "раунда", "раундов"])} сегодня · ${getTodayAccuracy(state)}%` : "готов к первому раунду"}</span>
-              </div>
-              <h3>${selected.name} <span class="prism-duration">· ${selected.duration} мин · ${selected.rounds} ${pluralRu(selected.rounds, ["раунд", "раунда", "раундов"])}</span></h3>
-              <p>${selected.description}</p>
+        <section class="studio-hero" style="--route-accent:${selected.accent}">
+          <div class="studio-hero-main">
+            <div class="studio-meta-bar">
+              <span class="studio-tag is-accent">${fatigue.label}</span>
+              <span class="studio-tag">${todayRounds.length ? `${todayRounds.length} ${pluralRu(todayRounds.length, ["раунд", "раунда", "раундов"])} сегодня · ${getTodayAccuracy(state)}%` : "СЕССИЯ 00 · ГОТОВ"}</span>
             </div>
 
-            <div class="prism-readiness-ring is-${readinessTone}" data-tooltip="Индекс готовности на основе сна, серии и ритма">
-              <svg viewBox="0 0 80 80" aria-hidden="true">
-                <circle class="pr-track" cx="40" cy="40" r="34" />
-                <circle class="pr-fill" cx="40" cy="40" r="34"
-                  stroke-dasharray="${ringCircumference.toFixed(1)}"
-                  stroke-dashoffset="${ringOffset.toFixed(1)}" />
-              </svg>
-              <div class="pr-center">
-                <strong>${readiness}</strong>
-                <small>готов</small>
-              </div>
+            <div class="studio-hero-heading">
+              <h3>${selected.name}</h3>
+              <span class="studio-hero-specs">${selected.duration} MIN / ${selected.rounds} ${pluralRu(selected.rounds, ["РАУНД", "РАУНДА", "РАУНДОВ"])}</span>
             </div>
-          </div>
 
-          <div class="prism-scenarios" role="group" aria-label="Быстрый выбор сценария">
-            ${quickScenarios.map((sc) => {
-              const active = selectedId === sc.id;
-              return `
-                <button type="button" class="prism-scenario-pill ${active ? "is-active" : ""}" data-protocol="${sc.id}">
-                  <span class="ps-icon" aria-hidden="true">${sc.icon}</span>
-                  <span class="ps-text">
-                    <strong>${sc.label}</strong>
-                    <small>${sc.sub}</small>
-                  </span>
-                </button>
-              `;
-            }).join("")}
-          </div>
+            <p class="studio-hero-desc">${selected.description}</p>
 
-          <div class="prism-hero-bottom">
-            <div class="hero-actions">
-              <button class="primary-action prism-cta" type="button" id="heroStartCircuit">
-                <span>Запустить · ${selected.name}</span>
+            <div class="studio-switch-strip" role="group" aria-label="Быстрый выбор сценария">
+              ${quickScenarios.map((sc) => {
+                const active = selectedId === sc.id;
+                return `
+                  <button type="button" class="studio-switch ${active ? "is-active" : ""}" data-protocol="${sc.id}">
+                    <span class="sw-code">${sc.code}</span>
+                    <span class="sw-body">
+                      <strong>${sc.label}</strong>
+                      <small>${sc.sub}</small>
+                    </span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+
+            <div class="studio-hero-actions">
+              <button class="primary-action studio-cta" type="button" id="heroStartCircuit">
+                <span>Начать · ${selected.name}</span>
                 <span class="cta-arrow" aria-hidden="true">→</span>
               </button>
-              <button class="ghost-action" type="button" id="heroWeakest">Слабая зона</button>
-              ${!program ? `<button class="ghost-action stim-entry" type="button" id="startProgramBtn">⭐ 21 день</button>` : ""}
+              <button class="ghost-action studio-ghost" type="button" id="heroWeakest">Слабая зона</button>
+              ${!program ? `<button class="ghost-action studio-ghost" type="button" id="startProgramBtn">Курс 21 день</button>` : ""}
             </div>
-            <div class="hero-stats prism-kpi-strip">
-              <div class="hero-stat" data-tooltip="нейроиндекс — среднее по 6 доменам"><strong>${model.overall}</strong><small>индекс</small></div>
-              <div class="hero-stat" data-tooltip="общий накопленный XP"><strong>${state.profile.totalXp}</strong><small>XP всего</small></div>
-              <div class="hero-stat ${due > 0 ? "is-due" : ""}" data-tooltip="доступно для повторения сейчас"><strong>${due}</strong><small>повторы</small></div>
+          </div>
+
+          <div class="studio-hero-telemetry">
+            <div class="studio-readiness is-${readinessTone}" data-tooltip="Индекс готовности на основе сна, серии и ритма">
+              <span class="st-label">ГОТОВНОСТЬ</span>
+              <div class="st-big">${readiness}<span>%</span></div>
+              <div class="st-ticks" aria-hidden="true">${ticks}</div>
+            </div>
+
+            <div class="studio-kpi-list">
+              <div class="st-kpi" data-tooltip="нейроиндекс — среднее по 6 доменам">
+                <span>НЕЙРОИНДЕКС</span>
+                <strong>${model.overall}</strong>
+              </div>
+              <div class="st-kpi" data-tooltip="общий накопленный XP">
+                <span>ВСЕГО XP</span>
+                <strong>${state.profile.totalXp}</strong>
+              </div>
+              <div class="st-kpi ${due > 0 ? "is-due" : ""}" data-tooltip="доступно для повторения сейчас">
+                <span>FSRS ПОВТОРЫ</span>
+                <strong>${due}</strong>
+              </div>
             </div>
           </div>
         </section>
 
-        <section class="prism-bento-row" aria-label="Быстрые действия">
-          <button class="prism-bento-card" type="button" data-center-mode="${weakMode}" style="--bento-accent:${weakMeta.accent || selected.accent}">
-            <div class="pb-head">
-              <span class="pb-badge">слабая зона</span>
-              <span class="pb-level">L${state.levels?.[weakMode] || 1}</span>
+        <section class="studio-index-row" aria-label="Быстрые действия">
+          <button class="studio-index-cell" type="button" data-center-mode="${weakMode}">
+            <div class="sic-top">
+              <span class="sic-num">01 / ПРИОРИТЕТ</span>
+              <span class="sic-lvl">L${String(state.levels?.[weakMode] || 1).padStart(2, "0")}</span>
             </div>
             <strong>${escapeHtml(weakMeta.title)}</strong>
-            <p>${escapeHtml(weakMeta.kicker || "Приоритетная точка роста")}</p>
-            <div class="pb-meter"><span style="width:${Math.min(100, Math.max(18, weakNeed))}%"></span></div>
-            <small class="pb-foot">приоритет ${weakNeed}/100 · старт →</small>
+            <p>${escapeHtml(weakMeta.kicker || "Точка максимального роста")}</p>
+            <div class="sic-bar"><span style="width:${Math.min(100, Math.max(16, weakNeed))}%"></span></div>
+            <div class="sic-foot">
+              <span>ИНДЕКС НУЖДЫ ${weakNeed}/100</span>
+              <span class="sic-go">СТАРТ →</span>
+            </div>
           </button>
 
-          <button class="prism-bento-card" type="button" data-center-mode="${due > 0 ? "recall" : nextMode}" style="--bento-accent:${due > 0 ? "#4fd1a8" : (nextMeta.accent || "#7c5cff")}">
-            <div class="pb-head">
-              <span class="pb-badge">${due > 0 ? "FSRS-5 повторы" : "умный шаг"}</span>
-              <span class="pb-level">${due > 0 ? `${due} шт.` : `L${state.levels?.[nextMode] || 1}`}</span>
+          <button class="studio-index-cell" type="button" data-center-mode="${due > 0 ? "recall" : nextMode}">
+            <div class="sic-top">
+              <span class="sic-num">02 / ${due > 0 ? "FSRS-5" : "СЛЕДУЮЩИЙ"}</span>
+              <span class="sic-lvl">${due > 0 ? `${due} КАРТ.` : `L${String(state.levels?.[nextMode] || 1).padStart(2, "0")}`}</span>
             </div>
             <strong>${due > 0 ? "Закрепить память" : escapeHtml(nextMeta.title)}</strong>
             <p>${due > 0 ? "Активное вспоминание в оптимальное окно кривой забывания." : escapeHtml(nextMeta.kicker || "Рекомендованный следующий модуль")}</p>
-            <small class="pb-foot">${due > 0 ? "открыть Recall Vault →" : "запустить модуль →"}</small>
+            <div class="sic-foot">
+              <span>${due > 0 ? "RECALL VAULT" : "УМНЫЙ ПОДБОР"}</span>
+              <span class="sic-go">ОТКРЫТЬ →</span>
+            </div>
           </button>
 
-          <div class="prism-bento-card is-coach" style="--bento-accent:${selected.accent}">
-            <div class="pb-head">
-              <span class="pb-badge">навигатор</span>
-              <span class="pb-level">${history.length} раундов</span>
+          <div class="studio-index-cell is-static">
+            <div class="sic-top">
+              <span class="sic-num">03 / НАВИГАТОР</span>
+              <span class="sic-lvl">${history.length} СЕСС.</span>
             </div>
             <strong>${escapeHtml(coach.headline || "Ритм под контролем")}</strong>
-            <p>${escapeHtml(coach.guardrail || coach.summary || "Короткие регулярные сессии дают самый устойчивый прирост.")}</p>
-            <div class="pb-links">
-              <button class="pb-link-btn" type="button" id="centerOpenProgress">Аналитика ↗</button>
-              <button class="pb-link-btn" type="button" id="centerOpenDrills">Все 23 drill →</button>
+            <p>${escapeHtml(coach.guardrail || coach.summary || "Короткие регулярные сессии дают устойчивый прирост.")}</p>
+            <div class="sic-links">
+              <button class="sic-link" type="button" id="centerOpenProgress">Аналитика ↗</button>
+              <button class="sic-link" type="button" id="centerOpenDrills">Каталог 23 →</button>
             </div>
           </div>
         </section>
 
-        <section class="protocols-grid-card prism-protocols">
-          <div class="prism-section-head">
+        <section class="protocols-grid-card studio-protocols">
+          <div class="studio-sec-head">
             <div>
-              <div class="progress-kicker">протоколы</div>
-              <h4>Выбери план тренировки</h4>
+              <span class="st-label">ПРОТОКОЛЫ / 06</span>
+              <h4>Маршруты тренировок</h4>
             </div>
-            <span class="prism-hint-pill">6 научных маршрутов</span>
+            <span class="studio-sec-note">Клик — выбрать активный план</span>
           </div>
-          <div class="protocols-grid">
+          <div class="protocols-grid studio-protocols-grid">
             ${PROTOCOL_IDS.map((id, i) => {
               const p = PROTOCOLS[id];
               const isActive = id === selectedId;
               const isSuggested = id === suggested;
               return `
-                <button class="protocol-card ${isActive ? "is-active" : ""}" type="button" data-protocol="${id}"
-                  style="--i:${i}; --p-accent:${p.accent}; --p-glow:${p.accent}29">
-                  ${isSuggested && !isActive ? `<span class="protocol-suggested">рекомендую сейчас</span>` : ""}
-                  <img class="protocol-card-art" src="${getProtocolArt(id)}" alt="" loading="lazy" />
-                  <span class="protocol-dot" aria-hidden="true"></span>
+                <button class="protocol-card studio-pcard ${isActive ? "is-active" : ""}" type="button" data-protocol="${id}" style="--i:${i}">
+                  <div class="sp-head">
+                    <span class="sp-num">${String(i + 1).padStart(2, "0")}</span>
+                    ${isActive ? `<span class="sp-pill is-active">АКТИВЕН</span>` : isSuggested ? `<span class="sp-pill">РЕКОМЕНДУЮ</span>` : `<span class="sp-time">${p.duration}M · ${p.rounds}R</span>`}
+                  </div>
                   <strong>${p.name}</strong>
-                  <small class="protocol-meta">${p.duration} мин · ${p.rounds} р.</small>
                   <p>${p.description}</p>
-                  <cite>${p.research}</cite>
+                  <div class="sp-foot">
+                    <span>${p.duration} мин · ${p.rounds} ${pluralRu(p.rounds, ["раунд", "раунда", "раундов"])}</span>
+                    <cite>${p.research}</cite>
+                  </div>
                 </button>
               `;
             }).join("")}
@@ -269,40 +288,40 @@ export function renderPageCenter(refs, state, handlers) {
         </section>
       </div>
 
-      <aside class="center-aside">
+      <aside class="center-aside studio-aside">
         ${renderDailyChallengeCard(state, handlers)}
 
         ${renderSleepCard(state)}
 
-        <section class="plan-list">
-          <div class="progress-kicker">маршрут — ${selected.name}</div>
-          <h4>${plan.length} ${pluralRu(plan.length, ["модуль", "модуля", "модулей"])}</h4>
-          <div class="plan-items">
+        <section class="plan-list studio-route-card">
+          <div class="studio-route-head">
+            <span class="st-label">МАРШРУТ / ${selected.name.toUpperCase()}</span>
+            <strong>${plan.length} ${pluralRu(plan.length, ["модуль", "модуля", "модулей"])}</strong>
+          </div>
+          <div class="plan-items studio-plan-items">
             ${plan.map((mode, i) => {
               const meta = MODE_META[mode];
               if (!meta) return "";
-              const v = getModeVisual(mode);
               return `
-                <button class="plan-item" type="button" data-mode="${mode}" style="--i:${i}; --route-accent:${meta.accent}">
-                  <span class="plan-rank">${i + 1}</span>
-                  <span class="plan-sprite"><img src="${v.sprite}" alt="" loading="lazy" /></span>
-                  <span class="plan-text">
-                    <span class="plan-title">${meta.title}</span>
-                    <span class="plan-sub">${meta.kicker}</span>
+                <button class="plan-item studio-plan-row" type="button" data-mode="${mode}" style="--i:${i}">
+                  <span class="spr-num">${String(i + 1).padStart(2, "0")}</span>
+                  <span class="spr-text">
+                    <span class="spr-title">${meta.title}</span>
+                    <span class="spr-sub">${meta.kicker}</span>
                   </span>
-                  <span class="plan-need">L${state.levels[mode] || 1}</span>
+                  <span class="spr-lvl">L${state.levels[mode] || 1}</span>
                 </button>
               `;
             }).join("")}
           </div>
         </section>
 
-        <details class="prism-aside-drawer">
-          <summary class="prism-drawer-summary">
-            <span>Цели, циркадный ритм и факт дня</span>
-            <span class="prism-drawer-chevron" aria-hidden="true">▾</span>
+        <details class="studio-drawer">
+          <summary class="studio-drawer-sum">
+            <span>ЦЕЛИ · ЦИРКАДНЫЙ РИТМ · ФАКТ ДНЯ</span>
+            <span class="studio-drawer-icon" aria-hidden="true">+</span>
           </summary>
-          <div class="prism-drawer-body">
+          <div class="studio-drawer-body">
             ${renderGoalsCard(state)}
             ${renderReminderCard(state)}
             <section class="circadian-card">
@@ -465,30 +484,30 @@ function renderSleepCard(state) {
     : v >= 6 ? "Сна впритык — избегай Sprint."
     : "Дефицит сна — Recovery + recall, без Sprint.";
 
-  // One-line collapsible strip with tap-to-expand
+  // One-line collapsible strip with tap-to-expand (clean instrument style)
   return `
-    <details class="sleep-card wellbeing-card">
+    <details class="sleep-card wellbeing-card studio-wellbeing">
       <summary class="wb-summary">
         <span class="wb-strip">
-          <span class="wb-chip wb-chip-${tone}" data-tooltip="часы сна">😴 ${display}</span>
-          <span class="wb-chip" data-tooltip="настроение">${moodEmoji} ${mv ?? "—"}/5</span>
-          <span class="wb-chip" data-tooltip="энергия">⚡ ${energyDots}</span>
+          <span class="wb-chip wb-chip-${tone}" data-tooltip="часы сна">СОН ${display}</span>
+          <span class="wb-chip" data-tooltip="настроение">НАСТР ${mv ?? "—"}/5</span>
+          <span class="wb-chip" data-tooltip="энергия">ЭНЕРГ ${energyDots}</span>
         </span>
         <span class="wb-tip-inline">${tip}</span>
       </summary>
       <div class="wb-expanded">
         <div class="wb-row">
-          <span class="wb-label">😴 сон</span>
+          <span class="wb-label">СОН</span>
           <strong id="sleepValue" class="sleep-${tone}">${display}</strong>
           <input id="sleepSlider" type="range" min="0" max="12" step="0.5" value="${v ?? 7}" />
         </div>
         <div class="wb-row">
-          <span class="wb-label">${moodEmoji} настроение</span>
+          <span class="wb-label">НАСТРОЕНИЕ</span>
           <strong id="moodValue">${mv ?? "—"}/5</strong>
           <input id="moodSlider" type="range" min="1" max="5" step="1" value="${mv ?? 3}" />
         </div>
         <div class="wb-row">
-          <span class="wb-label">⚡ энергия</span>
+          <span class="wb-label">ЭНЕРГИЯ</span>
           <strong id="energyValue">${energyDots}</strong>
           <input id="energySlider" type="range" min="1" max="5" step="1" value="${ev ?? 3}" />
         </div>
