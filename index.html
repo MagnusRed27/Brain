@@ -4,14 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#070b11" />
-    <meta name="description" content="NeuroForge — open-source adaptive cognitive training lab: 23 neuroscience drills, FSRS-5 recall, WebAudio resonator & 21-day protocols." />
+    <meta name="description" content="NeuroForge — open-source adaptive cognitive training lab: 23 neuroscience drills, FSRS-5 recall, WebAudio ambient & daily science/AI/longevity knowledge cards." />
     <meta property="og:title" content="NeuroForge — Cognitive Training Lab" />
-    <meta property="og:description" content="23 neuroscience-inspired cognitive drills, FSRS-5 spaced repetition, WebAudio resonator & deep analytics. 100% local, open source." />
+    <meta property="og:description" content="Cyber-lab cognitive training, interactive neural cortex, cozy ritual ambient & daily Science/Math/AI/Longevity flashcard stickers." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="256x256" href="./assets/brand/neuroforge-icon-256.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/brand/neuroforge-icon-180.png" />
-    <link rel="preload" as="image" href="./assets/brand/neuroforge-logo-512.png" />
-    <title>NeuroForge | Cognitive Training Lab</title>
+    <title>NeuroForge | Cyber Cortex Lab</title>
   </head>
   <body>
     <div id="bootScreen" class="boot-screen" role="status" aria-live="polite">
@@ -22,116 +21,110 @@
         <span class="boot-node boot-node-c"></span>
         <div class="boot-core">
           <svg class="nf-logo-svg" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-            <rect width="48" height="48" rx="14" fill="url(#nfLogoGradBoot)"/>
-            <path d="M24 11c-5.2 0-9.4 3.4-10.2 8.1-2.5 1.1-4.3 3.6-4.3 6.5 0 3.7 2.8 6.8 6.4 7.1.9 2.6 3.4 4.3 6.3 4.3h1.8V11z" fill="#fff" fill-opacity="0.16" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
-            <path d="M24 11c5.2 0 9.4 3.4 10.2 8.1 2.5 1.1 4.3 3.6 4.3 6.5 0 3.7-2.8 6.8-6.4 7.1-.9 2.6-3.4 4.3-6.3 4.3H24V11z" fill="#fff" fill-opacity="0.10" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
-            <path d="M17 21h4l2 4 3-7 2 4h3" stroke="#FCD34D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="17" cy="21" r="2" fill="#FCD34D"/>
-            <circle cx="31" cy="22" r="2" fill="#FCD34D"/>
-            <defs>
-              <linearGradient id="nfLogoGradBoot" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#0F766E"/><stop offset="1" stop-color="#134E4A"/>
-              </linearGradient>
-            </defs>
+            <rect width="48" height="48" rx="14" fill="#0d1522" stroke="#22d3ee" stroke-opacity="0.55" stroke-width="1.5"/>
+            <path d="M24 11c-5.2 0-9.4 3.4-10.2 8.1-2.5 1.1-4.3 3.6-4.3 6.5 0 3.7 2.8 6.8 6.4 7.1.9 2.6 3.4 4.3 6.3 4.3h1.8V11z" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M24 11c5.2 0 9.4 3.4 10.2 8.1 2.5 1.1 4.3 3.6 4.3 6.5 0 3.7-2.8 6.8-6.4 7.1-.9 2.6-3.4 4.3-6.3 4.3H24V11z" fill="#38bdf8" fill-opacity="0.10" stroke="#38bdf8" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M16 23h4l2 4 3-7 2 4h5" stroke="#e0f2fe" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
       </div>
       <div class="boot-copy">
-        <p class="boot-kicker">NeuroForge Prism</p>
-        <h1>Запускаю когнитивную станцию</h1>
-        <p>Калибрую интерфейс, аудио-движок и персональный маршрут.</p>
+        <p class="boot-kicker">NeuroForge</p>
+        <h1>Синхронизация нейро-лаборатории</h1>
+        <p>Загружаю карту мозга, ambient и карточки дня.</p>
       </div>
-      <div class="boot-progress" aria-hidden="true">
-        <span></span>
-      </div>
-      <div class="boot-steps" aria-hidden="true">
-        <span>профиль</span>
-        <span>нейросцена</span>
-        <span>протокол</span>
-      </div>
+      <div class="boot-progress" aria-hidden="true"><span></span></div>
     </div>
 
     <div class="ambient-grid" aria-hidden="true"></div>
 
-    <div class="app-shell">
-      <header class="top-strip">
-        <div class="brand-block" aria-label="NeuroForge">
+    <div class="app-shell shell-top-only">
+      <header class="top-strip top-bar-clean">
+        <button class="brand-block brand-home-btn" type="button" data-route="center" aria-label="NeuroForge — на главную">
           <div class="brand-mark" aria-hidden="true">
             <svg class="nf-logo-svg" viewBox="0 0 40 40" fill="none">
               <defs>
-                <linearGradient id="nfBrandGrad" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="var(--accent)"/>
-                  <stop offset="1" stop-color="var(--inv-bg)"/>
+                <linearGradient id="nfBrandGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#0E1A2B"/>
+                  <stop offset="1" stop-color="#070B11"/>
                 </linearGradient>
               </defs>
-              <rect width="40" height="40" rx="12" fill="url(#nfBrandGrad)"/>
-              <path d="M20 9.5c-4.2 0-7.5 2.7-8.2 6.4-2 .9-3.3 2.9-3.3 5.2 0 3 2.2 5.4 5.1 5.7.8 2 2.7 3.4 5 3.4H20V9.5z" fill="#ffffff" fill-opacity="0.16" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M20 9.5c4.2 0 7.5 2.7 8.2 6.4 2 .9 3.3 2.9 3.3 5.2 0 3-2.2 5.4-5.1 5.7-.8 2-2.7 3.4-5 3.4H20V9.5z" fill="#ffffff" fill-opacity="0.08" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round"/>
-              <path d="M14.5 18.5h3l1.6 3.2 2.3-5.6 1.7 3.4h2.4" stroke="#FCD34D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="14.5" cy="18.5" r="1.7" fill="#FCD34D"/>
-              <circle cx="25.5" cy="19.5" r="1.7" fill="#FCD34D"/>
+              <rect width="40" height="40" rx="11" fill="url(#nfBrandGrad)" stroke="var(--accent)" stroke-opacity="0.55" stroke-width="1.2"/>
+              <path d="M20 9.5c-4.2 0-7.4 2.7-8.1 6.3-2 .9-3.2 2.9-3.2 5.1 0 3 2.2 5.3 5 5.6.8 2 2.7 3.3 4.9 3.3H20V9.5z" fill="var(--accent)" fill-opacity="0.14" stroke="var(--accent)" stroke-width="1.35" stroke-linejoin="round"/>
+              <path d="M20 9.5c4.2 0 7.4 2.7 8.1 6.3 2 .9 3.2 2.9 3.2 5.1 0 3-2.2 5.3-5 5.6-.8 2-2.7 3.3-4.9 3.3H20V9.5z" fill="var(--accent-2)" fill-opacity="0.08" stroke="var(--accent-2)" stroke-width="1.35" stroke-linejoin="round"/>
+              <path d="M13.5 19.5h3.5l1.6 3 2.4-6 1.8 3.5h3.7" stroke="#E0F2FE" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="13.5" cy="19.5" r="1.5" fill="var(--accent)"/>
+              <circle cx="26.5" cy="20" r="1.5" fill="var(--accent)"/>
             </svg>
           </div>
           <div class="brand-text">
             <h1>NeuroForge</h1>
-            <p>cyber cortex · neural lab</p>
+            <p>cyber cortex</p>
           </div>
-        </div>
-        <div class="top-metrics" aria-label="Сводка">
-          <div class="quick-theme-pill" id="quickThemeSwitcher" role="group" aria-label="Переключить тему">
-            <button type="button" class="qt-dot" data-qt="aurora" title="Quantum (сапфир + синий)" aria-label="Тема Daylight"></button>
-            <button type="button" class="qt-dot" data-qt="citrus" title="Solar HUD (обсидиан + золото)" aria-label="Тема Espresso"></button>
-            <button type="button" class="qt-dot" data-qt="tide" title="Arctic HUD (светлая)" aria-label="Тема Ocean"></button>
-            <button type="button" class="qt-dot" data-qt="obsidian" title="Cyber Lab (графит + бирюза)" aria-label="Тема Synapse"></button>
-          </div>
-          <button class="ql-trigger" type="button" id="qlTrigger" aria-label="Быстрый запуск">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <span>Поиск</span>
-            <kbd>⌘K</kbd>
+        </button>
+
+        <nav class="top-tabs" aria-label="Основная навигация">
+          <button class="top-tab sidenav-item" type="button" data-route="center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="ico-fill" cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Ритуал</span>
           </button>
-          <div class="metric-pill" data-tooltip="XP сегодня — растёт за каждый раунд">
-            <span id="todayXp">0</span>
-            <small>XP</small>
+          <button class="top-tab sidenav-item" type="button" data-route="knowledge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="ico-fill" x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9h8M8 13h5"/></svg>
+            <span>Знания</span>
+          </button>
+          <button class="top-tab sidenav-item" type="button" data-route="drills">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="ico-fill" d="M4 12h4l2.5-6 3 12 2.5-6H20"/></svg>
+            <span>Тренировки</span>
+          </button>
+          <button class="top-tab sidenav-item" type="button" data-route="progress">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="ico-fill" d="M4 17l5-5 4 3 7-7"/><circle cx="20" cy="8" r="1.5" fill="currentColor"/></svg>
+            <span>Прогресс</span>
+          </button>
+        </nav>
+
+        <div class="top-dock" aria-label="Инструменты">
+          <div class="top-mini-stats" data-tooltip="Прогресс сегодня">
+            <span><strong id="todayXp">0</strong> XP</span>
+            <span class="tms-sep">·</span>
+            <span><strong id="streakDays">0</strong> дн.</span>
+            <span id="sessionFocus" hidden>0%</span>
+            <span id="comboLabel" hidden>x1.0</span>
+            <span id="streakShieldPill" hidden><span id="streakShieldCount">SH</span></span>
           </div>
-          <div class="metric-pill metric-streak" data-tooltip="дней подряд с тренировкой">
-            <span id="streakDays">0</span>
-            <small>серия</small>
+
+          <button class="top-icon-btn" type="button" id="qlTrigger" title="Быстрый запуск (⌘K)" aria-label="Поиск">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+
+          <div class="quick-theme-pill" id="quickThemeSwitcher" role="group" aria-label="Переключить тему">
+            <button type="button" class="qt-dot" data-qt="obsidian" title="Cyber Lab (графит + бирюза)" aria-label="Тема Cyber Lab"></button>
+            <button type="button" class="qt-dot" data-qt="aurora" title="Quantum (сапфир + синий)" aria-label="Тема Quantum"></button>
+            <button type="button" class="qt-dot" data-qt="citrus" title="Solar HUD (обсидиан + золото)" aria-label="Тема Solar HUD"></button>
+            <button type="button" class="qt-dot" data-qt="tide" title="Arctic HUD (светлая)" aria-label="Тема Arctic HUD"></button>
           </div>
-          <div class="metric-pill metric-shield" id="streakShieldPill" data-tooltip="щит сохранит серию при 1 пропуске. Зарабатывается за 7 дней." hidden>
-            <span id="streakShieldCount">SH</span>
-            <small>щит</small>
-          </div>
-          <div class="metric-pill" data-tooltip="средняя точность за сегодня">
-            <span id="sessionFocus">0%</span>
-            <small>точн.</small>
-          </div>
-          <div class="metric-pill metric-combo" data-tooltip="комбо за подряд верных ответов">
-            <span id="comboLabel">x1.0</span>
-            <small>поток</small>
-          </div>
+
+          <button class="top-icon-btn sidenav-item" type="button" data-route="settings" title="Настройки" aria-label="Настройки">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle class="ico-fill" cx="9" cy="8" r="2.5"/><circle class="ico-fill" cx="15" cy="16" r="2.5"/></svg>
+          </button>
         </div>
       </header>
 
       <nav class="bottom-nav" aria-label="Навигация (мобильная)">
-        <button class="bn-item" type="button" data-route="center" aria-label="Центр">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle class="ico-fill" cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg>
-          <small>Центр</small>
+        <button class="bn-item" type="button" data-route="center" aria-label="Ритуал">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle class="ico-fill" cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+          <small>Ритуал</small>
+        </button>
+        <button class="bn-item" type="button" data-route="knowledge" aria-label="Знания">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect class="ico-fill" x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9h8M8 13h5"/></svg>
+          <small>Знания</small>
         </button>
         <button class="bn-item" type="button" data-route="drills" aria-label="Тренировки">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect class="ico-fill" x="4" y="4" width="16" height="16" rx="5"/><path d="M7.5 12h2.3l1.7-3.8 2 7.6 1.7-3.8h1.8"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="ico-fill" d="M4 12h4l2.5-6 3 12 2.5-6H20"/></svg>
           <small>Drills</small>
         </button>
         <button class="bn-item" type="button" data-route="progress" aria-label="Прогресс">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="ico-fill" d="M4 18V13l5-4 4 3 7-6v12H4z"/><path d="M4 14l5-4 4 3 7-6"/><circle cx="20" cy="7" r="1.5" fill="currentColor"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="ico-fill" d="M4 17l5-5 4 3 7-7"/><circle cx="20" cy="8" r="1.5" fill="currentColor"/></svg>
           <small>Прогресс</small>
-        </button>
-        <button class="bn-item" type="button" data-route="records" aria-label="Рекорды">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path class="ico-fill" d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.2 6.8 19l1-5.8-4.3-4.1 5.9-.8L12 3z"/></svg>
-          <small>Рекорды</small>
-        </button>
-        <button class="bn-item" type="button" data-route="stim" aria-label="Stim">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle class="ico-fill" cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-          <small>Stim</small>
         </button>
         <button class="bn-item" type="button" data-route="settings" aria-label="Настройки">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle class="ico-fill" cx="9" cy="8" r="2.5"/><circle class="ico-fill" cx="15" cy="16" r="2.5"/></svg>
@@ -139,45 +132,14 @@
         </button>
       </nav>
 
-      <aside class="sidebar" aria-label="Навигация">
-        <nav class="sidenav">
-          <button class="sidenav-item" type="button" data-route="center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="ico-fill" cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg>
-            <span>Центр</span>
-          </button>
-          <button class="sidenav-item" type="button" data-route="drills">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="ico-fill" x="4" y="4" width="16" height="16" rx="5"/><path d="M7.5 12h2.3l1.7-3.8 2 7.6 1.7-3.8h1.8"/></svg>
-            <span>Тренировки</span>
-          </button>
-          <button class="sidenav-item" type="button" data-route="progress">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="ico-fill" d="M4 18V13l5-4 4 3 7-6v12H4z"/><path d="M4 14l5-4 4 3 7-6"/><circle cx="20" cy="7" r="1.5" fill="currentColor"/></svg>
-            <span>Прогресс</span>
-          </button>
-          <button class="sidenav-item" type="button" data-route="records">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="ico-fill" d="M12 3l2.6 5.3 5.9.8-4.3 4.1 1 5.8L12 16.2 6.8 19l1-5.8-4.3-4.1 5.9-.8L12 3z"/></svg>
-            <span>Рекорды</span>
-          </button>
-          <button class="sidenav-item" type="button" data-route="stim">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="ico-fill" cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-            <span>Stim Lab</span>
-          </button>
-          <div class="sidenav-spacer"></div>
-          <button class="sidenav-item" type="button" data-route="settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle class="ico-fill" cx="9" cy="8" r="2.5"/><circle class="ico-fill" cx="15" cy="16" r="2.5"/></svg>
-            <span>Настройки</span>
-          </button>
-          <span class="sidenav-indicator" aria-hidden="true"></span>
-        </nav>
-      </aside>
-
-      <main class="page" id="page">
+      <main class="page page-clean-full" id="page">
         <div class="page-bg" aria-hidden="true">
           <canvas id="neuroCanvas" class="neuro-canvas"></canvas>
         </div>
         <header class="page-header" id="pageHeader">
           <div>
-            <p class="page-kicker" id="pageKicker">protocol</p>
-            <h2 id="pageTitle">Командный центр</h2>
+            <p class="page-kicker" id="pageKicker"></p>
+            <h2 id="pageTitle"></h2>
           </div>
           <div class="page-actions" id="pageActions"></div>
         </header>
@@ -188,9 +150,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <div id="nowPlaying" class="now-playing" hidden aria-live="polite">
-      <span class="np-wave" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </span>
+      <span class="np-wave" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
       <div class="np-text">
         <strong id="npTitle">—</strong>
         <small id="npSub">stim · идёт</small>
@@ -199,11 +159,9 @@
     </div>
 
     <div id="achievementToast" class="achievement-toast" hidden aria-live="polite">
-      <span class="ach-burst" aria-hidden="true">
-        <span></span><span></span><span></span><span></span><span></span><span></span>
-      </span>
+      <span class="ach-burst" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span>
       <div class="ach-content">
-        <span class="ach-icon">🏆</span>
+        <span class="ach-icon">★</span>
         <div>
           <strong id="achTitle">Достижение</strong>
           <small id="achSub">unlocked</small>

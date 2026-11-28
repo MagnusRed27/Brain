@@ -25,7 +25,7 @@ export function runMentalMath(ctx) {
   const level = state.levels[mode] || 1;
   const total = 10 + level * 2;
   const deadline = Math.max(2200, 5500 - level * 280);
-  const inputMode = state.settings?.mathInputMode || "choice"; // "type" | "choice"
+  const inputMode = "choice"; // always fast mouse/tap choice tiles (no typing)
 
   const inputHtml = inputMode === "choice"
     ? `<div class="math-choices" id="mathChoices"></div>
@@ -1116,74 +1116,114 @@ export function runDigitSymbol(ctx) {
   next();
 }
 
-/* Verbal Fluency — 60-sec semantic listing (classic neuropsych test) */
+/* Verbal Fluency — fast mouse-click semantic word filter (zero typing) */
 export async function runVerbalFluency(ctx) {
   const state = ctx.getState();
   const mode = "vfluency";
   const level = state.levels[mode] || 1;
   const categories = [
-    { name: "животные", hint: "любые живые существа" },
-    { name: "еда и продукты", hint: "блюда, продукты, ингредиенты" },
-    { name: "города России", hint: "населённые пункты" },
-    { name: "профессии", hint: "работы и должности" },
-    { name: "цвета и оттенки", hint: "цвета любых тонов" },
+    {
+      name: "Животные",
+      hint: "Кликай только живых существ — избегай лишних слов",
+      targets: ["волк", "дельфин", "сова", "гепард", "ёж", "фламинго", "бобр", "пантера", "альбатрос", "лиса", "выдра", "ястреб", "медведь", "олень"],
+      foils: ["берёза", "мрамор", "компас", "ветер", "молот", "гранат", "скрипка", "бархат", "маяк", "рубин"],
+    },
+    {
+      name: "Еда и продукты",
+      hint: "Выбирай только съедобное — быстро и без ошибок",
+      targets: ["авокадо", "миндаль", "лосось", "гречка", "матча", "инжир", "сыр", "кефир", "корица", "шпинат", "трюфель", "манго", "мёд", "оливки"],
+      foils: ["фарфор", "стекло", "клён", "песок", "глина", "свеча", "янтарь", "бронза", "лён", "кварц"],
+    },
+    {
+      name: "Наука и технологии",
+      hint: "Кликай только научные и технологические термины",
+      targets: ["нейрон", "фотон", "алгоритм", "энтропия", "синапс", "геном", "матрица", "квант", "тензор", "изотоп", "миелин", "теломера", "аксон", "вектор"],
+      foils: ["соната", "фреска", "акварель", "баллада", "мрамор", "гобелен", "витраж", "вальс", "эскиз", "брошь"],
+    },
+    {
+      name: "Профессии",
+      hint: "Выбирай только профессии и роли",
+      targets: ["хирург", "архитектор", "физик", "пилот", "инженер", "биолог", "дизайнер", "астроном", "математик", "штурман", "акустик", "нейролог", "химик", "капитан"],
+      foils: ["телескоп", "скальпель", "чертёж", "компас", "реактор", "колледж", "лаборатория", "орбита", "диплом", "атлас"],
+    },
   ];
   const cat = categories[randomInt(0, categories.length - 1)];
-  const seconds = 60 + Math.min(30, level * 4);
+  const targetSet = new Set(cat.targets);
+  const boardWords = shuffle([...cat.targets, ...cat.foils]);
+  const seconds = Math.max(25, 45 - level * 2);
 
   renderDrillShell(ctx.refs, state, mode, `
     <div class="vfluency-board">
       <div class="vfluency-cat">Категория: <strong>${cat.name}</strong></div>
-      <div class="hint-line">${cat.hint} · по одному слову на строку или через запятую. ${seconds} сек.</div>
-      <textarea id="vfluencyInput" class="vfluency-input" placeholder="кот, собака, ёж…" autocomplete="off" spellcheck="false" rows="6"></textarea>
+      <div class="hint-line">${cat.hint} · Найди ${cat.targets.length} слов за ${seconds} сек.</div>
+      <div class="vf-chip-grid" id="vfGrid">
+        ${boardWords.map((w) => `<button type="button" class="vf-chip" data-word="${w}">${w}</button>`).join("")}
+      </div>
       <div class="vfluency-stats">
-        <div><span id="vfCount">0</span><small>уникальных</small></div>
+        <div><span id="vfCount">0/${cat.targets.length}</span><small>найдено</small></div>
+        <div><span id="vfMistakes">0</span><small>ошибок</small></div>
         <div><span id="vfTime">${seconds}</span><small>сек осталось</small></div>
       </div>
-      <button class="primary-action" type="button" id="vfFinish">Завершить досрочно</button>
+      <button class="ghost-action" type="button" id="vfFinish">Завершить</button>
       <div class="progress-track"><span id="taskProgress"></span></div>
     </div>
   `);
 
-  const input = ctx.refs.arena.querySelector("#vfluencyInput");
+  const grid = ctx.refs.arena.querySelector("#vfGrid");
   const countEl = ctx.refs.arena.querySelector("#vfCount");
+  const errEl = ctx.refs.arena.querySelector("#vfMistakes");
   const timeEl = ctx.refs.arena.querySelector("#vfTime");
   const finishBtn = ctx.refs.arena.querySelector("#vfFinish");
-  window.requestAnimationFrame(() => { try { input.focus(); } catch { /* noop */ } });
   ctx.startCountdown(seconds);
 
   const startedAt = performance.now();
   let remaining = seconds;
-  let timer = window.setInterval(() => {
+  let hits = 0;
+  let mistakes = 0;
+  let done = false;
+
+  const timer = window.setInterval(() => {
     remaining -= 1;
     timeEl.textContent = String(Math.max(0, remaining));
     ctx.setProgress(((seconds - remaining) / seconds) * 100);
-    updateCount();
-    if (remaining <= 0) { window.clearInterval(timer); finish(); }
+    if (remaining <= 0) finish();
   }, 1000);
 
-  function parseUnique() {
-    const raw = input.value.toLowerCase();
-    const words = raw.split(/[\s,;.\n]+/).map((w) => w.trim()).filter((w) => w.length >= 2 && w.length <= 30);
-    return [...new Set(words)];
-  }
-  function updateCount() {
-    countEl.textContent = String(parseUnique().length);
-  }
+  grid.querySelectorAll(".vf-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (done || btn.disabled) return;
+      btn.disabled = true;
+      const isTarget = targetSet.has(btn.dataset.word);
+      if (isTarget) {
+        hits += 1;
+        btn.classList.add("is-hit");
+        countEl.textContent = `${hits}/${cat.targets.length}`;
+        ctx.feedback(true, btn.dataset.word);
+        if (hits >= cat.targets.length) window.setTimeout(finish, 260);
+      } else {
+        mistakes += 1;
+        btn.classList.add("is-miss");
+        errEl.textContent = String(mistakes);
+        ctx.feedback(false, "не из категории");
+      }
+    });
+  });
 
-  input.addEventListener("input", updateCount);
-  finishBtn.addEventListener("click", () => { window.clearInterval(timer); finish(); });
-  ctx.signal.addEventListener("abort", () => window.clearInterval(timer), { once: true });
+  finishBtn.addEventListener("click", finish);
+  ctx.signal.addEventListener("abort", () => { done = true; window.clearInterval(timer); }, { once: true });
 
   function finish() {
-    const words = parseUnique();
-    const count = words.length;
-    // Norms: healthy adult ~14-22 animals/60s. Scale linearly between 6 and 24.
-    const accuracy = Math.max(0, Math.min(1, (count - 6) / 18));
-    const xp = Math.round(16 + accuracy * 36 + level * 2);
-    const rt = performance.now() - startedAt;
-    const result = makeResult(mode, accuracy, xp, 0, level, rt);
-    result.vfluencyCount = count;
+    if (done) return;
+    done = true;
+    window.clearInterval(timer);
+    const totalClicks = hits + mistakes;
+    const recallRate = hits / cat.targets.length;
+    const precision = totalClicks ? hits / totalClicks : 0;
+    const accuracy = Math.max(0, Math.min(1, recallRate * 0.7 + precision * 0.3));
+    const xp = Math.round(18 + accuracy * 36 + level * 2);
+    const rt = hits ? (performance.now() - startedAt) / hits : seconds * 1000;
+    const result = makeResult(mode, accuracy, xp, mistakes, level, rt);
+    result.vfluencyCount = hits;
     result.vfluencyCategory = cat.name;
     ctx.finish(result);
   }
@@ -1297,48 +1337,62 @@ export async function runEpisodicVault(ctx) {
 
   async function recallPhase(id, prompt, seconds, fromPct, toPct) {
     return new Promise((resolve) => {
+      const chipWords = shuffle([...targets, ...lures.slice(0, 13)]);
+      const selected = new Set();
       renderDrillShell(ctx.refs, state, mode, `
         <div class="evault-board">
           <div class="evault-phase-bar">
             ${makePhaseBar(id)}
           </div>
-          <div class="evault-recall-prompt">${prompt}</div>
-          <textarea id="evRecallInput" class="evault-input" rows="6" placeholder="кофе, стол, ключ … по одному в строку или через запятую" autocomplete="off" spellcheck="false"></textarea>
+          <div class="evault-recall-prompt">${prompt} (кликай слова мышкой)</div>
+          <div class="vf-chip-grid ev-chip-grid" id="evChipGrid">
+            ${chipWords.map((w) => `<button type="button" class="vf-chip ev-chip" data-word="${w}">${w}</button>`).join("")}
+          </div>
           <div class="evault-recall-meta">
-            <span><strong id="evRecallCount">0</strong> уникальных</span>
+            <span><strong id="evRecallCount">0</strong> / ${targets.length} выбрано</span>
             <span><strong id="evRecallTime">${seconds}</strong> сек</span>
-            <button class="primary-action" type="button" id="evRecallDone">Готово ↵</button>
+            <button class="primary-action" type="button" id="evRecallDone">Готово →</button>
           </div>
           <div class="progress-track"><span id="taskProgress"></span></div>
         </div>
       `);
-      const input = ctx.refs.arena.querySelector("#evRecallInput");
+      const grid = ctx.refs.arena.querySelector("#evChipGrid");
       const countEl = ctx.refs.arena.querySelector("#evRecallCount");
       const timeEl = ctx.refs.arena.querySelector("#evRecallTime");
       const doneBtn = ctx.refs.arena.querySelector("#evRecallDone");
-      window.requestAnimationFrame(() => { try { input.focus(); } catch { input.focus(); } });
       let remaining = seconds;
+      let finished = false;
       const tick = window.setInterval(() => {
         remaining -= 1;
         timeEl.textContent = String(Math.max(0, remaining));
         ctx.setProgress(fromPct + ((seconds - remaining) / seconds) * (toPct - fromPct));
-        if (remaining <= 0) { window.clearInterval(tick); finalize(); }
+        if (remaining <= 0) finalize();
       }, 1000);
 
-      function parseWords() {
-        return [...new Set(input.value.toLowerCase().split(/[\s,;.\n]+/).map((w) => w.trim()).filter((w) => w.length >= 2))];
-      }
-      input.addEventListener("input", () => {
-        countEl.textContent = String(parseWords().length);
+      grid.querySelectorAll(".ev-chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const w = btn.dataset.word;
+          if (selected.has(w)) {
+            selected.delete(w);
+            btn.classList.remove("is-selected");
+          } else {
+            selected.add(w);
+            btn.classList.add("is-selected");
+          }
+          countEl.textContent = String(selected.size);
+        });
       });
+
       doneBtn.addEventListener("click", finalize);
-      ctx.signal.addEventListener("abort", () => window.clearInterval(tick), { once: true });
+      ctx.signal.addEventListener("abort", () => { finished = true; window.clearInterval(tick); }, { once: true });
 
       function finalize() {
+        if (finished) return;
+        finished = true;
         window.clearInterval(tick);
-        const words = parseWords();
-        const hits = words.filter((w) => targets.map((t) => t.toLowerCase()).includes(w));
-        ctx.feedback(hits.length >= 5, `вспомнил ${hits.length}/15`);
+        const targetLower = targets.map((t) => t.toLowerCase());
+        const hits = [...selected].filter((w) => targetLower.includes(w.toLowerCase()));
+        ctx.feedback(hits.length >= 5, `вспомнил ${hits.length}/${targets.length}`);
         resolve(hits);
       }
     });

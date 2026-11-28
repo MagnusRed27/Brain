@@ -401,81 +401,91 @@ function runRecall(ctx) {
   const level = state.levels[mode] || 1;
   const due = state.cards.filter((card) => card.due <= Date.now()).sort((a, b) => a.due - b.due);
   const card = due[0] || state.cards[0];
-  const voiceSupported = isVoiceSupported() && state.settings.voiceEnabled !== false;
+
+  // Build 4 mouse-clickable choice options (1 correct + 3 distractors)
+  const fallbackPool = [
+    "Активное вспоминание без подсказки (retrieval practice)",
+    "Консолидация памяти в фазе глубокого сна N3",
+    "Снижение энтропии за счёт байесовского обновления",
+    "Баланс сигнальных путей mTOR и AMPK",
+    "Ускорение проведения импульса через миелинизацию",
+    "Адаптивный порог сложности по методу лестницы",
+  ];
+  const otherBacks = state.cards
+    .filter((c) => c.id !== card.id && c.back && c.back !== card.back)
+    .map((c) => c.back);
+  const pool = [...new Set([...otherBacks, ...fallbackPool])].filter((x) => x !== card.back);
+  const distractors = shuffle(pool).slice(0, 3);
+  const options = shuffle([
+    { text: card.back, correct: true },
+    ...distractors.map((text) => ({ text, correct: false })),
+  ]);
+
   renderDrillShell(ctx.refs, state, mode, `
-    <div class="recall-layout">
+    <div class="recall-layout recall-choice-layout">
       <div class="recall-card">
+        <div class="recall-head-row">
+          <span class="st-label">FSRS-5 · ВЫБЕРИ ВЕРНЫЙ ОТВЕТ МЫШКОЙ</span>
+          <button class="ghost-action recall-speak-mini" id="recallSpeak" type="button">Озвучить</button>
+        </div>
         <div class="recall-prompt">${escapeHtml(card.front)}</div>
-        <input class="recall-input" id="recallAnswer" autocomplete="off" placeholder="ответ" />
-        <div class="recall-actions">
-          <button class="secondary-action" id="checkRecall" type="button">Проверить</button>
-          <button class="ghost-action" id="showRecall" type="button">Показать</button>
-          <button class="recall-mic" id="recallMic" type="button" ${voiceSupported ? "" : "hidden"}>🎙 Голос</button>
-          <button class="ghost-action" id="recallSpeak" type="button">🔊 Озвучить</button>
+        <div class="recall-options-grid" id="recallOptions">
+          ${options.map((opt, idx) => `
+            <button class="recall-option-btn" type="button" data-idx="${idx}" data-correct="${opt.correct ? "1" : "0"}">
+              <span class="ro-num">${idx + 1}</span>
+              <span class="ro-text">${escapeHtml(opt.text)}</span>
+            </button>
+          `).join("")}
         </div>
         <div class="hint-line" id="recallFeedback"></div>
         <div class="rating-row" id="ratingRow" hidden>
-          <button class="rating-button rating-fsrs" data-rating="1" type="button">Слабо</button>
-          <button class="rating-button rating-fsrs" data-rating="2" type="button">Трудно</button>
-          <button class="rating-button rating-fsrs" data-rating="3" type="button">Хорошо</button>
-          <button class="rating-button rating-fsrs" data-rating="4" type="button">Легко</button>
+          <span class="rating-prompt">Насколько легко вспомнилось? (интервал FSRS-5)</span>
+          <div class="rating-btns">
+            <button class="rating-button rating-fsrs" data-rating="1" type="button">Снова</button>
+            <button class="rating-button rating-fsrs" data-rating="2" type="button">Трудно</button>
+            <button class="rating-button rating-fsrs" data-rating="3" type="button">Хорошо</button>
+            <button class="rating-button rating-fsrs" data-rating="4" type="button">Легко</button>
+          </div>
         </div>
       </div>
-      <form class="recall-form" id="addCardForm">
-        <input id="cardFront" placeholder="вопрос" />
-        <textarea id="cardBack" placeholder="ответ"></textarea>
-        <button class="primary-action" type="submit">Добавить</button>
-      </form>
+      <details class="recall-add-drawer">
+        <summary>+ Добавить свою карточку в FSRS-5</summary>
+        <form class="recall-form" id="addCardForm">
+          <input id="cardFront" placeholder="Вопрос или факт" />
+          <textarea id="cardBack" placeholder="Ответ для запоминания"></textarea>
+          <button class="primary-action" type="submit">Сохранить</button>
+        </form>
+      </details>
     </div>
   `, renderSidePanel(state, mode));
 
-  const answerEl = ctx.refs.arena.querySelector("#recallAnswer");
+  const optionsEl = ctx.refs.arena.querySelector("#recallOptions");
   const feedbackEl = ctx.refs.arena.querySelector("#recallFeedback");
   const ratingRow = ctx.refs.arena.querySelector("#ratingRow");
-  const micBtn = ctx.refs.arena.querySelector("#recallMic");
   const speakBtn = ctx.refs.arena.querySelector("#recallSpeak");
+  let picked = false;
+  let startedAt = performance.now();
 
   speakBtn?.addEventListener("click", () => speak(card.front));
 
-  if (voiceSupported && micBtn) {
-    const listener = createVoiceListener({
-      onResult: (transcript) => {
-        answerEl.value = transcript;
-        micBtn.classList.remove("is-listening");
-        micBtn.textContent = "🎙 Голос";
-      },
-      onError: () => {
-        micBtn.classList.remove("is-listening");
-        micBtn.textContent = "🎙 Голос";
-      },
-    });
-    if (listener) {
-      micBtn.addEventListener("click", () => {
-        if (listener.listening) {
-          listener.stop();
-          micBtn.classList.remove("is-listening");
-          micBtn.textContent = "🎙 Голос";
-        } else {
-          listener.start();
-          micBtn.classList.add("is-listening");
-          micBtn.textContent = "● Слушаю";
-        }
+  optionsEl.querySelectorAll(".recall-option-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (picked) return;
+      picked = true;
+      const isRight = btn.dataset.correct === "1";
+      optionsEl.querySelectorAll(".recall-option-btn").forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.correct === "1") b.classList.add("is-correct");
       });
-      ctx.signal?.addEventListener("abort", () => listener.stop(), { once: true });
-    }
-  }
+      if (!isRight) btn.classList.add("is-wrong");
+      ctx.feedback(isRight, isRight ? "точно в цель" : "запомни верный вариант");
+      feedbackEl.innerHTML = isRight
+        ? `<span class="feedback-pill good">верно · ${Math.round(performance.now() - startedAt)} мс</span> Оцени лёгкость для алгоритма FSRS-5:`
+        : `<span class="feedback-pill warn">не совсем</span> Верный ответ подсвечен зелёным. Оцени сложность:`;
+      ratingRow.hidden = false;
+    });
+  });
 
-  ctx.refs.arena.querySelector("#checkRecall").addEventListener("click", () => {
-    const score = compareText(answerEl.value, card.back);
-    feedbackEl.innerHTML = score >= 0.68
-      ? `<span class="feedback-pill good">похоже</span> ${escapeHtml(card.back)}`
-      : `<span class="feedback-pill warn">проверь</span> ${escapeHtml(card.back)}`;
-    ratingRow.hidden = false;
-  });
-  ctx.refs.arena.querySelector("#showRecall").addEventListener("click", () => {
-    feedbackEl.innerHTML = `<span class="feedback-pill warn">ответ</span> ${escapeHtml(card.back)}`;
-    ratingRow.hidden = false;
-  });
   ratingRow.querySelectorAll("[data-rating]").forEach((button) => {
     button.addEventListener("click", () => {
       const ratingVal = parseInt(button.dataset.rating, 10);

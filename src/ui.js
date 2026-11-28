@@ -44,6 +44,7 @@ export function createRefs() {
 }
 
 export function setPageHeader(refs, kicker, title, actionsHtml = "") {
+  document.body.classList.remove("is-ritual-home");
   if (refs.pageKicker) refs.pageKicker.textContent = kicker;
   if (refs.pageTitle) refs.pageTitle.textContent = title;
   if (refs.pageActions) refs.pageActions.innerHTML = actionsHtml;
@@ -356,432 +357,379 @@ function renderLivingBrainSvg(domains = {}, overall = 41, readiness = 72) {
   `;
 }
 
+function attachSpotlightEffects(root) {
+  if (!root) return;
+  root.querySelectorAll(".js-spotlight").forEach((el) => {
+    el.addEventListener("pointermove", (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--mx", `${x.toFixed(1)}%`);
+      el.style.setProperty("--my", `${y.toFixed(1)}%`);
+    }, { passive: true });
+  });
+}
+
+function renderStickerCardHtml(card, state, idx = 0) {
+  const today = new Date().toISOString().slice(0, 10);
+  const studied = (state.knowledgeLog?.[today] || []).includes(card.id);
+  const inFsrs = (state.cards || []).some((c) => c.front === card.question);
+  const domInfo = KNOWLEDGE_DOMAINS.find((d) => d.id === card.domain) || KNOWLEDGE_DOMAINS[1];
+  const tilts = [-1.15, 0.85, -0.75, 1.05, -0.9, 0.7];
+  const tilt = tilts[idx % tilts.length];
+
+  return `
+    <article class="sticker-card js-spotlight ${studied ? "is-studied" : ""}" data-kid="${card.id}" data-domain="${card.domain}" style="--tilt:${tilt}deg">
+      <div class="sticker-tape" aria-hidden="true"></div>
+      <div class="sticker-inner">
+        <div class="sticker-face sticker-front">
+          <div class="st-top">
+            <span class="st-domain">${domInfo.code} · ${domInfo.label}</span>
+            <span class="st-tag">${escapeHtml(card.tag)}</span>
+          </div>
+          <h5>${escapeHtml(card.title)}</h5>
+          <p class="st-body">${escapeHtml(card.body)}</p>
+          <div class="st-note">
+            <span>ГЛАВНАЯ МЫСЛЬ</span>
+            <p>${escapeHtml(card.takeaway)}</p>
+          </div>
+          <cite class="st-src">${escapeHtml(card.source)}</cite>
+          <div class="st-actions">
+            <button type="button" class="st-btn is-flip" data-kflip="${card.id}">Проверить ↻</button>
+            <button type="button" class="st-btn ${inFsrs ? "is-saved" : ""}" data-kfsrs="${card.id}">${inFsrs ? "✓ FSRS-5" : "+ FSRS-5"}</button>
+            <button type="button" class="st-btn ${studied ? "is-done" : ""}" data-kdone="${card.id}">${studied ? "✓ Изучено" : "Изучено"}</button>
+          </div>
+        </div>
+
+        <div class="sticker-face sticker-back" hidden>
+          <div class="st-top">
+            <span class="st-domain">АКТИВНОЕ ВСПОМИНАНИЕ</span>
+            <button type="button" class="st-back-btn" data-kflip="${card.id}">← Назад</button>
+          </div>
+          <div class="st-q">
+            <span class="st-label">ВОПРОС</span>
+            <h5>${escapeHtml(card.question)}</h5>
+          </div>
+          <div class="st-a" data-kanswer="${card.id}" hidden>
+            <span class="st-label">ОТВЕТ</span>
+            <p>${escapeHtml(card.answer)}</p>
+          </div>
+          <div class="st-actions">
+            <button type="button" class="primary-action st-reveal-btn" data-kreveal="${card.id}">Показать ответ</button>
+            <button type="button" class="st-btn ${inFsrs ? "is-saved" : ""}" data-kfsrs="${card.id}">${inFsrs ? "✓ FSRS-5" : "+ FSRS-5"}</button>
+            <button type="button" class="st-btn ${studied ? "is-done" : ""}" data-kdone="${card.id}">${studied ? "✓ Запомнил" : "+10 XP"}</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function bindStickerGrid(grid, state, handlers, onProgressChange) {
+  if (!grid) return;
+  attachSpotlightEffects(grid);
+
+  grid.querySelectorAll("[data-kflip]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".sticker-card");
+      if (!card) return;
+      const front = card.querySelector(".sticker-front");
+      const back = card.querySelector(".sticker-back");
+      const showingBack = !back.hidden;
+      front.hidden = !showingBack;
+      back.hidden = showingBack;
+      card.classList.toggle("is-flipped", !showingBack);
+    });
+  });
+
+  grid.querySelectorAll("[data-kreveal]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".sticker-card");
+      const ans = card?.querySelector(`[data-kanswer="${btn.dataset.kreveal}"]`);
+      if (ans) ans.hidden = false;
+      btn.hidden = true;
+    });
+  });
+
+  grid.querySelectorAll("[data-kfsrs]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const cardObj = KNOWLEDGE_CARDS.find((c) => c.id === btn.dataset.kfsrs);
+      if (!cardObj) return;
+      handlers.saveKnowledgeToFsrs?.(cardObj);
+      const card = btn.closest(".sticker-card");
+      card?.querySelectorAll(`[data-kfsrs="${cardObj.id}"]`).forEach((b) => {
+        b.classList.add("is-saved");
+        b.textContent = "✓ FSRS-5";
+      });
+    });
+  });
+
+  grid.querySelectorAll("[data-kdone]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.kdone;
+      handlers.markKnowledgeStudied?.(id);
+      const todayStr = new Date().toISOString().slice(0, 10);
+      state.knowledgeLog = state.knowledgeLog || {};
+      state.knowledgeLog[todayStr] = state.knowledgeLog[todayStr] || [];
+      if (!state.knowledgeLog[todayStr].includes(id)) state.knowledgeLog[todayStr].push(id);
+      const card = btn.closest(".sticker-card");
+      card?.classList.add("is-studied");
+      card?.querySelectorAll(`[data-kdone="${id}"]`).forEach((b) => {
+        b.classList.add("is-done");
+        b.textContent = "✓ Изучено";
+      });
+      onProgressChange?.(state.knowledgeLog[todayStr].length);
+    });
+  });
+}
+
 export function renderPageCenter(refs, state, handlers) {
-  setPageHeader(refs, "командный центр", getTimeGreeting(), "");
+  setPageHeader(refs, "", "", "");
+  document.body.classList.add("is-ritual-home");
+
   const model = getDashboardModel(state);
-  const fatigue = getFatigueSignal(state);
   const selectedId = state.protocols?.lastUsed || suggestProtocol(state);
   const selected = getProtocol(selectedId);
-  const suggested = suggestProtocol(state);
   const plan = selected.pick(state);
-  const tip = getCircadianTip();
-  const calibration = getCalibration(state);
-  const heroBackdrop = getHeroBackdrop(state.settings?.theme);
   const coach = buildTrainingCoach(state);
+  const ritual = getRitualContext();
+  const musicOn = Boolean(state.settings?.musicEnabled);
   const due = dueCardsCount(state);
-  const history = state.history || [];
-  const today = new Date().toISOString().slice(0, 10);
-  const todayRounds = history.filter((r) => r.date === today);
   const readiness = Math.max(0, Math.min(100, Number(coach.readiness) || 72));
-  const readinessTone = readiness >= 76 ? "good" : readiness >= 52 ? "warn" : "bad";
-  const ringCircumference = 2 * Math.PI * 34;
-  const ringOffset = ringCircumference * (1 - readiness / 100);
-
   const weakMode = plan.find((mode) => MODE_META[mode]) || coach.queue?.[0]?.mode || "recall";
   const weakMeta = MODE_META[weakMode] || MODE_META.recall;
-  const weakNeed = Math.round(getModeNeed(state, weakMode));
-  const nextMode = coach.queue?.[0]?.mode || weakMode;
-  const nextMeta = MODE_META[nextMode] || weakMeta;
-
-  const program = getProgram(state);
-  const programDay = program ? getCurrentProgramDay(state) : null;
-  const programInfo = programDay && programDay <= 21 ? getProgramDay(programDay) : null;
-  const programSummary = program ? getProgramSummary(state) : null;
-  const programTodayDone = program ? isTodayDone(state) : false;
+  const nowStr = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const studiedCount = (state.knowledgeLog?.[todayKey] || []).length;
 
   const quickScenarios = [
-    { id: "sprint", code: "01", label: "Спринт", sub: "8 мин · старт" },
-    { id: "adaptive", code: "02", label: "Адаптив", sub: "18 мин · баланс" },
-    { id: "memory", code: "03", label: "Память", sub: "18 мин · FSRS-5" },
-    { id: "recovery", code: "04", label: "Отдых", sub: "12 мин · ритм" },
+    { id: "sprint",   label: "Спринт",  time: "8 мин" },
+    { id: "adaptive", label: "Адаптив", time: "18 мин" },
+    { id: "memory",   label: "Память",  time: "18 мин" },
+    { id: "recovery", label: "Отдых",   time: "12 мин" },
   ];
 
-  const ticks = Array.from({ length: 10 }, (_, idx) => {
-    const filled = readiness >= (idx + 1) * 10;
-    return `<i class="${filled ? "is-on" : ""}"></i>`;
-  }).join("");
-
   refs.arena.innerHTML = `
-    <div class="center-grid studio-center">
-      ${program ? renderProgramHero(state, programDay, programInfo, programSummary, programTodayDone) : ""}
-
-      <div class="center-main">
-        ${renderRitualBar(state)}
-
-        <section class="studio-hero" style="--route-accent:${selected.accent}">
-          <div class="studio-hero-main">
-            <div class="studio-meta-bar">
-              <span class="studio-tag is-accent">${fatigue.label}</span>
-              <span class="studio-tag">${todayRounds.length ? `${todayRounds.length} ${pluralRu(todayRounds.length, ["раунд", "раунда", "раундов"])} сегодня · ${getTodayAccuracy(state)}%` : "СЕССИЯ 00 · ГОТОВ"}</span>
+    <div class="ritual-home">
+      <!-- 1. Cozy Coffee & Ambient Ritual Capsule -->
+      <div class="cozy-capsule js-spotlight">
+        <div class="cc-left">
+          <div class="cc-cup" aria-hidden="true">${getRitualSvg("morning")}</div>
+          <div class="cc-copy">
+            <div class="cc-meta">
+              <span class="st-label">${ritual.kicker}</span>
+              <span class="cc-time">${nowStr}</span>
             </div>
-
-            <div class="studio-hero-heading">
-              <h3>${selected.name}</h3>
-              <span class="studio-hero-specs">${selected.duration} MIN / ${selected.rounds} ${pluralRu(selected.rounds, ["РАУНД", "РАУНДА", "РАУНДОВ"])}</span>
-            </div>
-
-            <p class="studio-hero-desc">${selected.description}</p>
-
-            <div class="studio-switch-strip" role="group" aria-label="Быстрый выбор сценария">
-              ${quickScenarios.map((sc) => {
-                const active = selectedId === sc.id;
-                return `
-                  <button type="button" class="studio-switch ${active ? "is-active" : ""}" data-protocol="${sc.id}">
-                    <span class="sw-code">${sc.code}</span>
-                    <span class="sw-body">
-                      <strong>${sc.label}</strong>
-                      <small>${sc.sub}</small>
-                    </span>
-                  </button>
-                `;
-              }).join("")}
-            </div>
-
-            <div class="studio-hero-actions">
-              <button class="primary-action studio-cta" type="button" id="heroStartCircuit">
-                <span>Начать · ${selected.name}</span>
-                <span class="cta-arrow" aria-hidden="true">→</span>
-              </button>
-              <button class="ghost-action studio-ghost" type="button" id="heroWeakest">Слабая зона</button>
-              ${!program ? `<button class="ghost-action studio-ghost" type="button" id="startProgramBtn">Курс 21 день</button>` : ""}
-            </div>
+            <p class="cc-line">${ritual.title}</p>
           </div>
-
-          <div class="studio-hero-telemetry">
-            ${renderLivingBrainSvg(state.domains, model.overall, readiness)}
-
-            <div class="studio-kpi-list">
-              <div class="st-kpi" data-tooltip="нейроиндекс — среднее по 6 доменам">
-                <span>Нейроиндекс</span>
-                <strong>${model.overall}</strong>
-              </div>
-              <div class="st-kpi" data-tooltip="общий накопленный XP">
-                <span>Всего XP</span>
-                <strong>${state.profile.totalXp}</strong>
-              </div>
-              <div class="st-kpi ${due > 0 ? "is-due" : ""}" data-tooltip="доступно для повторения сейчас">
-                <span>FSRS повторы</span>
-                <strong>${due}</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="studio-index-row" aria-label="Быстрые действия">
-          <button class="studio-index-cell" type="button" data-center-mode="${weakMode}">
-            <div class="sic-top">
-              <span class="sic-num">01 / ПРИОРИТЕТ</span>
-              <span class="sic-lvl">L${String(state.levels?.[weakMode] || 1).padStart(2, "0")}</span>
-            </div>
-            <strong>${escapeHtml(weakMeta.title)}</strong>
-            <p>${escapeHtml(weakMeta.kicker || "Точка максимального роста")}</p>
-            <div class="sic-bar"><span style="width:${Math.min(100, Math.max(16, weakNeed))}%"></span></div>
-            <div class="sic-foot">
-              <span>ИНДЕКС НУЖДЫ ${weakNeed}/100</span>
-              <span class="sic-go">СТАРТ →</span>
-            </div>
-          </button>
-
-          <button class="studio-index-cell" type="button" data-center-mode="${due > 0 ? "recall" : nextMode}">
-            <div class="sic-top">
-              <span class="sic-num">02 / ${due > 0 ? "FSRS-5" : "СЛЕДУЮЩИЙ"}</span>
-              <span class="sic-lvl">${due > 0 ? `${due} КАРТ.` : `L${String(state.levels?.[nextMode] || 1).padStart(2, "0")}`}</span>
-            </div>
-            <strong>${due > 0 ? "Закрепить память" : escapeHtml(nextMeta.title)}</strong>
-            <p>${due > 0 ? "Активное вспоминание в оптимальное окно кривой забывания." : escapeHtml(nextMeta.kicker || "Рекомендованный следующий модуль")}</p>
-            <div class="sic-foot">
-              <span>${due > 0 ? "RECALL VAULT" : "УМНЫЙ ПОДБОР"}</span>
-              <span class="sic-go">ОТКРЫТЬ →</span>
-            </div>
-          </button>
-
-          <div class="studio-index-cell is-static">
-            <div class="sic-top">
-              <span class="sic-num">03 / НАВИГАТОР</span>
-              <span class="sic-lvl">${history.length} СЕСС.</span>
-            </div>
-            <strong>${escapeHtml(coach.headline || "Ритм под контролем")}</strong>
-            <p>${escapeHtml(coach.guardrail || coach.summary || "Короткие регулярные сессии дают устойчивый прирост.")}</p>
-            <div class="sic-links">
-              <button class="sic-link" type="button" id="centerOpenProgress">Аналитика ↗</button>
-              <button class="sic-link" type="button" id="centerOpenDrills">Каталог 23 →</button>
-            </div>
-          </div>
-        </section>
-
-        ${renderLearnTodayShell(state)}
-
-        <section class="protocols-grid-card studio-protocols">
-          <div class="studio-sec-head">
-            <div>
-              <span class="st-label">ПРОТОКОЛЫ / 06</span>
-              <h4>Маршруты тренировок</h4>
-            </div>
-            <span class="studio-sec-note">Клик — выбрать активный план</span>
-          </div>
-          <div class="protocols-grid studio-protocols-grid">
-            ${PROTOCOL_IDS.map((id, i) => {
-              const p = PROTOCOLS[id];
-              const isActive = id === selectedId;
-              const isSuggested = id === suggested;
-              return `
-                <button class="protocol-card studio-pcard ${isActive ? "is-active" : ""}" type="button" data-protocol="${id}" style="--i:${i}">
-                  <div class="sp-head">
-                    <span class="sp-num">${String(i + 1).padStart(2, "0")}</span>
-                    ${isActive ? `<span class="sp-pill is-active">АКТИВЕН</span>` : isSuggested ? `<span class="sp-pill">РЕКОМЕНДУЮ</span>` : `<span class="sp-time">${p.duration}M · ${p.rounds}R</span>`}
-                  </div>
-                  <strong>${p.name}</strong>
-                  <p>${p.description}</p>
-                  <div class="sp-foot">
-                    <span>${p.duration} мин · ${p.rounds} ${pluralRu(p.rounds, ["раунд", "раунда", "раундов"])}</span>
-                    <cite>${p.research}</cite>
-                  </div>
-                </button>
-              `;
-            }).join("")}
-          </div>
-        </section>
+        </div>
+        <button type="button" class="cc-music-pill ${musicOn ? "is-playing" : ""}" id="ritualMusicBtn" aria-pressed="${musicOn ? "true" : "false"}">
+          <span class="srb-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="cc-music-label">${musicOn ? "Lo-Fi Ambient играет" : "Включить фоновую музыку"}</span>
+        </button>
       </div>
 
-      <aside class="center-aside studio-aside">
-        ${renderDailyChallengeCard(state, handlers)}
+      <!-- 2. Centerpiece: Single-Focus Holographic Brain Stage -->
+      <section class="ritual-stage js-spotlight">
+        <div class="rs-brain-col">
+          ${renderLivingBrainSvg(state.domains, model.overall, readiness)}
+          <div class="rs-node-hint" id="rsNodeHint">Наведи на зону мозга или кликни для мгновенного старта</div>
+        </div>
 
-        ${renderSleepCard(state)}
+        <div class="rs-action-col">
+          <div class="rs-status-row">
+            <span class="rs-badge">SYNC ${readiness}%</span>
+            <span class="rs-stat">Индекс <strong>${model.overall}</strong></span>
+            ${due > 0 ? `<button type="button" class="rs-due-btn" data-quick-mode="recall">FSRS повторы · ${due}</button>` : ""}
+          </div>
 
-        <section class="plan-list studio-route-card">
-          <div class="studio-route-head">
-            <span class="st-label">МАРШРУТ / ${selected.name.toUpperCase()}</span>
-            <strong>${plan.length} ${pluralRu(plan.length, ["модуль", "модуля", "модулей"])}</strong>
-          </div>
-          <div class="plan-items studio-plan-items">
-            ${plan.map((mode, i) => {
-              const meta = MODE_META[mode];
-              if (!meta) return "";
-              return `
-                <button class="plan-item studio-plan-row" type="button" data-mode="${mode}" style="--i:${i}">
-                  <span class="spr-num">${String(i + 1).padStart(2, "0")}</span>
-                  <span class="spr-text">
-                    <span class="spr-title">${meta.title}</span>
-                    <span class="spr-sub">${meta.kicker}</span>
-                  </span>
-                  <span class="spr-lvl">L${state.levels[mode] || 1}</span>
-                </button>
-              `;
-            }).join("")}
-          </div>
-        </section>
+          <h2 class="rs-title">${getTimeGreeting()}</h2>
+          <p class="rs-desc">${selected.description}</p>
 
-        <details class="studio-drawer">
-          <summary class="studio-drawer-sum">
-            <span>ЦЕЛИ · ЦИРКАДНЫЙ РИТМ · ФАКТ ДНЯ</span>
-            <span class="studio-drawer-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="studio-drawer-body">
-            ${renderGoalsCard(state)}
-            ${renderReminderCard(state)}
-            <section class="circadian-card">
-              <div class="progress-kicker">сейчас · ${new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</div>
-              <p>${escapeHtml(tip.tip)}</p>
-              <cite>${escapeHtml(tip.source)}</cite>
-            </section>
-            ${calibration ? `
-              <section class="calibration-card">
-                <div class="progress-kicker">самооценка · ${calibration.samples} прогноза</div>
-                <h4>${calibration.classification}</h4>
-                <div class="calibration-bar">
-                  <span style="left: ${50 + Math.max(-50, Math.min(50, calibration.bias / 2))}%"></span>
-                  <small class="cb-l">недооценка</small>
-                  <small class="cb-r">переоценка</small>
-                </div>
-                <p>${escapeHtml(calibration.hint)}</p>
-              </section>
-            ` : ""}
-            <section class="fact-card" id="centerFact"></section>
+          <div class="rs-mode-pills" role="group" aria-label="Режим сессии">
+            ${quickScenarios.map((sc) => `
+              <button type="button" class="rs-pill ${selectedId === sc.id ? "is-active" : ""}" data-protocol="${sc.id}">
+                <strong>${sc.label}</strong>
+                <small>${sc.time}</small>
+              </button>
+            `).join("")}
           </div>
-        </details>
-      </aside>
+
+          <div class="rs-cta-row">
+            <button class="primary-action rs-main-cta" type="button" id="heroStartCircuit">
+              <span>Начать · ${selected.name}</span>
+              <span class="cta-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="ghost-action rs-weak-btn" type="button" data-quick-mode="${weakMode}">
+              Слабая зона: ${escapeHtml(weakMeta.title)}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Stylish Collectible Knowledge Sticker-Cards -->
+      <section class="stickers-showcase" id="learnTodaySection">
+        <div class="ss-head">
+          <div>
+            <span class="st-label">СТИКЕРЫ ЗНАНИЙ · НАУКА · МАТЕМАТИКА · ИИ · АНТИЭЙДЖИНГ</span>
+            <h3>Изучить сегодня</h3>
+          </div>
+          <div class="ss-controls">
+            <span class="sls-progress-pill" id="learnProgressPill">${studiedCount} / 4 ИЗУЧЕНО</span>
+            <button type="button" class="ghost-action sls-btn" id="learnShuffleBtn">Другие ↻</button>
+            <button type="button" class="ghost-action sls-btn" id="openAllStickersBtn">Все 24 →</button>
+          </div>
+        </div>
+
+        <div class="stickers-grid" id="learnCardsGrid"></div>
+      </section>
     </div>
   `;
 
-  refs.arena.querySelector("#heroStartCircuit").addEventListener("click", () => handlers.startCircuit(selectedId));
-  refs.arena.querySelector("#heroWeakest").addEventListener("click", () => handlers.openMode(plan[0] || "recall"));
-  refs.arena.querySelectorAll("[data-center-protocol]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.startCircuit?.(btn.dataset.centerProtocol));
-  });
-  refs.arena.querySelectorAll("[data-center-mode]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.openMode?.(btn.dataset.centerMode));
-  });
-  refs.arena.querySelector("#centerOpenProgress")?.addEventListener("click", () => handlers.openProgress?.());
-  refs.arena.querySelector("#centerOpenDrills")?.addEventListener("click", () => handlers.openDrills?.());
-  refs.arena.querySelectorAll("[data-protocol]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.selectProtocol(btn.dataset.protocol));
-  });
-  refs.arena.querySelectorAll("[data-mode]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.openMode(btn.dataset.mode));
-  });
-  refs.arena.querySelectorAll("[data-dc-start]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.openMode(btn.dataset.dcStart));
-  });
-  bindCoachActions(refs.arena, handlers);
-  refs.arena.querySelector("#startProgramBtn")?.addEventListener("click", () => handlers.startProgram());
-  refs.arena.querySelector("#startProgramDay")?.addEventListener("click", () => {
-    if (programInfo) handlers.startCircuit(programInfo.protocol);
-  });
-  refs.arena.querySelector("#completeProgramDay")?.addEventListener("click", () => handlers.completeProgramDay());
-  // wellbeing sliders (sleep / mood / energy)
-  const sleepSlider = refs.arena.querySelector("#sleepSlider");
-  const sleepValue = refs.arena.querySelector("#sleepValue");
-  if (sleepSlider) {
-    sleepSlider.addEventListener("input", () => { sleepValue.textContent = `${sleepSlider.value} ч`; });
-    sleepSlider.addEventListener("change", () => handlers.setSleepHours(Number(sleepSlider.value)));
-  }
-  const moodSlider = refs.arena.querySelector("#moodSlider");
-  const moodValue = refs.arena.querySelector("#moodValue");
-  if (moodSlider) {
-    moodSlider.addEventListener("input", () => { moodValue.textContent = `${moodSlider.value}/5`; });
-    moodSlider.addEventListener("change", () => handlers.setMood?.(Number(moodSlider.value)));
-  }
-  const energySlider = refs.arena.querySelector("#energySlider");
-  const energyValue = refs.arena.querySelector("#energyValue");
-  if (energySlider) {
-    energySlider.addEventListener("input", () => {
-      const v = Number(energySlider.value);
-      energyValue.textContent = "●".repeat(v) + "○".repeat(5 - v);
-    });
-    energySlider.addEventListener("change", () => handlers.setEnergy?.(Number(energySlider.value)));
-  }
-  // goals
-  refs.arena.querySelectorAll("[data-goal-template]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.addGoal(btn.dataset.goalTemplate));
-  });
-  refs.arena.querySelectorAll("[data-goal-remove]").forEach((btn) => {
-    btn.addEventListener("click", () => handlers.removeGoal(btn.dataset.goalRemove));
-  });
-  refs.arena.querySelector("#openGoalsLib")?.addEventListener("click", () => {
-    refs.arena.querySelector("#goalsLib")?.toggleAttribute("hidden");
-  });
-  refs.factHost = refs.arena.querySelector("#centerFact");
+  attachSpotlightEffects(refs.arena);
 
-  // --- Ritual Bar: Ambient Music toggle & jump to Learn Today ---
+  // Ambient music toggle
   const musicBtn = refs.arena.querySelector("#ritualMusicBtn");
   musicBtn?.addEventListener("click", () => {
     const isNowOn = handlers.toggleAmbientMusic?.();
     musicBtn.classList.toggle("is-playing", Boolean(isNowOn));
     musicBtn.setAttribute("aria-pressed", isNowOn ? "true" : "false");
-    const strong = musicBtn.querySelector("strong");
-    const small = musicBtn.querySelector("small");
-    if (strong) strong.textContent = isNowOn ? "Ambient играет" : "Фоновая музыка";
-    if (small) small.textContent = isNowOn ? "WebAudio · выключить" : "Спокойный фокус · вкл.";
-  });
-  refs.arena.querySelector("#ritualJumpLearn")?.addEventListener("click", () => {
-    refs.arena.querySelector("#learnTodaySection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const lbl = musicBtn.querySelector(".cc-music-label");
+    if (lbl) lbl.textContent = isNowOn ? "Lo-Fi Ambient играет" : "Включить фоновую музыку";
   });
 
-  // --- Learn Today Knowledge Deck ---
-  let kDomain = "all";
+  // Live hover feedback on Brain HUD nodes
+  const nodeHint = refs.arena.querySelector("#rsNodeHint");
+  refs.arena.querySelectorAll(".lb-node, .lb-pill").forEach((el) => {
+    el.addEventListener("pointerenter", () => {
+      const label = el.getAttribute("aria-label") || el.textContent.trim();
+      if (nodeHint && label) nodeHint.textContent = `${label} · клик — запуск в 1 касание`;
+    });
+    el.addEventListener("click", () => {
+      const mode = el.dataset.centerMode;
+      if (mode) handlers.quickLaunchMode ? handlers.quickLaunchMode(mode) : handlers.openMode(mode);
+    });
+  });
+
+  // Protocol & quick-launch buttons
+  refs.arena.querySelector("#heroStartCircuit")?.addEventListener("click", () => handlers.startCircuit(selectedId));
+  refs.arena.querySelectorAll("[data-protocol]").forEach((btn) => {
+    btn.addEventListener("click", () => handlers.selectProtocol(btn.dataset.protocol));
+  });
+  refs.arena.querySelectorAll("[data-quick-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const m = btn.dataset.quickMode;
+      handlers.quickLaunchMode ? handlers.quickLaunchMode(m) : handlers.openMode(m);
+    });
+  });
+  refs.arena.querySelector("#openAllStickersBtn")?.addEventListener("click", () => handlers.openKnowledge?.());
+
+  // 4 Today's Collectible Stickers
   let kOffset = 0;
   const kGrid = refs.arena.querySelector("#learnCardsGrid");
   const kPill = refs.arena.querySelector("#learnProgressPill");
 
-  function renderKnowledgeDeck() {
+  function drawHomeStickers() {
     if (!kGrid) return;
-    const cards = getKnowledgeByDomain(kDomain, kOffset);
-    kGrid.innerHTML = cards.map((card) => renderKnowledgeCardHtml(card, state)).join("");
-    const todayKey = new Date().toISOString().slice(0, 10);
-    const doneCount = (state.knowledgeLog?.[todayKey] || []).length;
-    if (kPill) kPill.textContent = `${doneCount} / 4 ИЗУЧЕНО`;
-
-    kGrid.querySelectorAll("[data-kflip]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const article = btn.closest(".kcard");
-        if (!article) return;
-        const front = article.querySelector(".kcard-front");
-        const back = article.querySelector(".kcard-back");
-        const showingBack = !back.hidden;
-        front.hidden = !showingBack;
-        back.hidden = showingBack;
-        article.classList.toggle("is-flipped", !showingBack);
-      });
-    });
-
-    kGrid.querySelectorAll("[data-kreveal]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const article = btn.closest(".kcard");
-        const ans = article?.querySelector(`[data-kanswer="${btn.dataset.kreveal}"]`);
-        if (ans) ans.hidden = false;
-        btn.hidden = true;
-      });
-    });
-
-    kGrid.querySelectorAll("[data-kfsrs]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const card = KNOWLEDGE_CARDS.find((c) => c.id === btn.dataset.kfsrs);
-        if (!card) return;
-        handlers.saveKnowledgeToFsrs?.(card);
-        const article = btn.closest(".kcard");
-        article?.querySelectorAll(`[data-kfsrs="${card.id}"]`).forEach((b) => {
-          b.classList.add("is-saved");
-          b.textContent = "✓ В FSRS-5";
-        });
-      });
-    });
-
-    kGrid.querySelectorAll("[data-kdone]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.kdone;
-        handlers.markKnowledgeStudied?.(id);
-        const todayStr = new Date().toISOString().slice(0, 10);
-        state.knowledgeLog = state.knowledgeLog || {};
-        state.knowledgeLog[todayStr] = state.knowledgeLog[todayStr] || [];
-        if (!state.knowledgeLog[todayStr].includes(id)) state.knowledgeLog[todayStr].push(id);
-        const article = btn.closest(".kcard");
-        article?.classList.add("is-studied");
-        article?.querySelectorAll(`[data-kdone="${id}"]`).forEach((b) => {
-          b.classList.add("is-done");
-          b.textContent = "✓ Изучено";
-        });
-        if (kPill) kPill.textContent = `${state.knowledgeLog[todayStr].length} / 4 ИЗУЧЕНО`;
-      });
+    const cards = getKnowledgeByDomain("all", kOffset);
+    kGrid.innerHTML = cards.map((card, i) => renderStickerCardHtml(card, state, i)).join("");
+    bindStickerGrid(kGrid, state, handlers, (cnt) => {
+      if (kPill) kPill.textContent = `${cnt} / 4 ИЗУЧЕНО`;
     });
   }
 
-  refs.arena.querySelectorAll("#learnDomainTabs [data-kdomain]").forEach((tab) => {
+  refs.arena.querySelector("#learnShuffleBtn")?.addEventListener("click", () => {
+    kOffset += 1;
+    drawHomeStickers();
+  });
+
+  drawHomeStickers();
+}
+
+export function renderPageKnowledge(refs, state, handlers) {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const studiedCount = (state.knowledgeLog?.[todayKey] || []).length;
+  const due = dueCardsCount(state);
+
+  setPageHeader(refs, "база знаний · fsrs-5", "Стикеры знаний", `
+    <div class="sls-head-actions">
+      <span class="sls-progress-pill" id="kPageProgress">${studiedCount} ИЗУЧЕНО СЕГОДНЯ</span>
+      ${due > 0 ? `<button type="button" class="primary-action sls-btn" id="kOpenRecall">Повторить FSRS (${due}) →</button>` : ""}
+      <button type="button" class="ghost-action sls-btn" id="kAddToggle">+ Свой стикер</button>
+    </div>
+  `);
+
+  refs.arena.innerHTML = `
+    <div class="knowledge-board-page">
+      <div class="sls-tabs" id="kPageTabs" role="tablist" aria-label="Темы знаний">
+        ${KNOWLEDGE_DOMAINS.map((d, idx) => `
+          <button type="button" class="sls-tab ${idx === 0 ? "is-active" : ""}" data-kdomain="${d.id}" role="tab" aria-selected="${idx === 0 ? "true" : "false"}">
+            <span>${d.code}</span> ${d.label}
+          </button>
+        `).join("")}
+      </div>
+
+      <form class="sls-custom-form" id="kCustomForm" hidden>
+        <div class="sls-cf-grid">
+          <input type="text" id="kCustomFront" placeholder="Заголовок новости или вопрос для проверки" required />
+          <input type="text" id="kCustomBack" placeholder="Ключевой ответ / суть для запоминания в FSRS-5" required />
+        </div>
+        <div class="sls-cf-actions">
+          <button type="submit" class="primary-action">Сохранить в FSRS-5</button>
+          <button type="button" class="ghost-action" id="kCustomCancel">Отмена</button>
+        </div>
+      </form>
+
+      <div class="stickers-grid stickers-grid-full" id="kPageGrid"></div>
+    </div>
+  `;
+
+  let activeDomain = "all";
+  const grid = refs.arena.querySelector("#kPageGrid");
+  const pill = refs.pageActions?.querySelector("#kPageProgress");
+
+  function drawAll() {
+    const list = activeDomain === "all"
+      ? KNOWLEDGE_CARDS
+      : KNOWLEDGE_CARDS.filter((c) => c.domain === activeDomain);
+    grid.innerHTML = list.map((card, i) => renderStickerCardHtml(card, state, i)).join("");
+    bindStickerGrid(grid, state, handlers, (cnt) => {
+      if (pill) pill.textContent = `${cnt} ИЗУЧЕНО СЕГОДНЯ`;
+    });
+  }
+
+  refs.arena.querySelectorAll("#kPageTabs [data-kdomain]").forEach((tab) => {
     tab.addEventListener("click", () => {
-      kDomain = tab.dataset.kdomain;
-      kOffset = 0;
-      refs.arena.querySelectorAll("#learnDomainTabs [data-kdomain]").forEach((t) => {
+      activeDomain = tab.dataset.kdomain;
+      refs.arena.querySelectorAll("#kPageTabs [data-kdomain]").forEach((t) => {
         t.classList.toggle("is-active", t === tab);
         t.setAttribute("aria-selected", t === tab ? "true" : "false");
       });
-      renderKnowledgeDeck();
+      drawAll();
     });
   });
 
-  refs.arena.querySelector("#learnShuffleBtn")?.addEventListener("click", () => {
-    kOffset += 1;
-    renderKnowledgeDeck();
+  const form = refs.arena.querySelector("#kCustomForm");
+  refs.pageActions?.querySelector("#kAddToggle")?.addEventListener("click", () => {
+    if (form) form.hidden = !form.hidden;
   });
-
-  const customForm = refs.arena.querySelector("#learnCustomForm");
-  refs.arena.querySelector("#learnAddToggle")?.addEventListener("click", () => {
-    if (customForm) customForm.hidden = !customForm.hidden;
+  refs.pageActions?.querySelector("#kOpenRecall")?.addEventListener("click", () => handlers.openRecall?.());
+  refs.arena.querySelector("#kCustomCancel")?.addEventListener("click", () => {
+    if (form) form.hidden = true;
   });
-  refs.arena.querySelector("#learnCustomCancel")?.addEventListener("click", () => {
-    if (customForm) customForm.hidden = true;
-  });
-  customForm?.addEventListener("submit", (e) => {
+  form?.addEventListener("submit", (e) => {
     e.preventDefault();
-    const f = refs.arena.querySelector("#learnCustomFront");
-    const b = refs.arena.querySelector("#learnCustomBack");
+    const f = refs.arena.querySelector("#kCustomFront");
+    const b = refs.arena.querySelector("#kCustomBack");
     if (f?.value.trim() && b?.value.trim()) {
       handlers.addCustomKnowledgeCard?.(f.value, b.value);
       f.value = "";
       b.value = "";
-      customForm.hidden = true;
+      form.hidden = true;
     }
   });
 
-  renderKnowledgeDeck();
+  drawAll();
 }
 
 function renderCenterMissionDeck(state, protocol, plan, coach) {
@@ -1591,6 +1539,143 @@ function syncDrillToolbar(refs, view) {
   });
 }
 
+function renderDevelopmentCabinet(state, model, coach, recommended) {
+  const domains = state.domains || {};
+  const sorted = DOMAINS.map((d) => ({
+    ...d,
+    score: Math.round(domains[d.id] ?? 40),
+  })).sort((a, b) => b.score - a.score);
+
+  const strongest = sorted[0];
+  const weakest = sorted[sorted.length - 1];
+  const history = state.history || [];
+  const recent = history.slice(-12);
+  const avgAcc = recent.length ? Math.round((recent.reduce((s, r) => s + (r.accuracy || 0), 0) / recent.length) * 100) : null;
+  const rts = recent.filter((r) => r.rt && r.rt > 0 && r.rt < 15000).map((r) => r.rt);
+  const avgRt = rts.length ? Math.round(rts.reduce((a, b) => a + b, 0) / rts.length) : null;
+
+  const DOMAIN_ADVICE = {
+    wm: {
+      title: "Рабочая память — главный рычаг",
+      steps: [
+        "3 раза в неделю по 1 раунду Dual N-back или Backwards Span на границе сложности (цель 75–85%).",
+        "Держи в голове 3–4 пункта без записи перед тем, как перенести их в заметки.",
+        "Сон < 7 часов бьёт по рабочей памяти сильнее всего — в такие дни переключайся на Recall Vault.",
+      ],
+      drills: ["nback", "bspan", "grid"],
+    },
+    memory: {
+      title: "Долговременная память и FSRS-5",
+      steps: [
+        "Сохраняй интересные факты из вкладки «Знания» в FSRS-5 и закрывай повторы до сна.",
+        "Используй активное вспоминание без подсказки: усилие извлечения закрепляет след вдвое сильнее чтения.",
+        "Раз в неделю проходи Episodic Vault — он тренирует устойчивость к помехам.",
+      ],
+      drills: ["recall", "evault", "grid"],
+    },
+    focus: {
+      title: "Устойчивое внимание и тормозной контроль",
+      steps: [
+        "Начинай рабочее утро с 3-минутного спринта: Stroop Plus + Stop Signal убирают импульсивные клики.",
+        "Если точность ниже 75%, замедли отклик на 100–150 мс — сначала чистота, потом скорость.",
+        "Убирай уведомления блоками по 25–40 минут: переключение контекста стоит 15–20% ресурса.",
+      ],
+      drills: ["stroop", "stopsig", "flanker"],
+    },
+    logic: {
+      title: "Аналитика, правила и планирование",
+      steps: [
+        "В Tower of London и Logic Forge делай паузу 3 секунды перед первым ходом — планируй целиком.",
+        "Rule Hunt тренирует когнитивную гибкость: умение вовремя отбросить старую гипотезу.",
+        "Комбинируй логику с карточками по математике (теорема Байеса, энтропия) во вкладке «Знания».",
+      ],
+      drills: ["tower", "logic", "rulehunt"],
+    },
+    speed: {
+      title: "Скорость обработки и ритм",
+      steps: [
+        "Короткие сессии Reaction Rail и Digit-Symbol утром разгоняют скорость обработки без усталости.",
+        "Следи за стабильностью RT: ровный темп без провалов важнее одного случайного рекорда.",
+        "Лёгкая физическая разминка за 10 минут до сессии ускоряет реакцию на 8–12%.",
+      ],
+      drills: ["reaction", "dsst", "scan"],
+    },
+    spatial: {
+      title: "Пространственное и образное мышление",
+      steps: [
+        "Rotation Lab и Memory Grid развивают мысленное вращение и визуальную карту пространства.",
+        "При запоминании абстрактных концепций привязывай их к визуальным схемам или маршрутам.",
+        "Тренируй Schulte Table с фокусом взгляда строго в центре — это расширяет периферийное поле.",
+      ],
+      drills: ["rotate", "grid", "schulte"],
+    },
+  };
+
+  const plan = DOMAIN_ADVICE[weakest.id] || DOMAIN_ADVICE.wm;
+  const paceTip = avgAcc === null
+    ? "Пройди 3–5 раундов в разных модулях — система вычислит твой профиль скорости и точности."
+    : avgAcc >= 86
+      ? `Средняя точность ${avgAcc}% — отличный контроль. Смело ускоряй темп и поднимай уровень сложности.`
+      : avgAcc >= 70
+        ? `Точность ${avgAcc}% — идеальная зона нейропластичности (70–85%). Продолжай в этом темпе.`
+        : `Точность ${avgAcc}% — много импульсивных ошибок. Притормози на 150 мс перед кликом, чтобы стабилизировать базу.`;
+
+  return `
+    <section class="dev-roadmap-card progress-panel-v8" data-progress-view="overview" style="grid-column: 1 / -1">
+      <div class="drc-header">
+        <div>
+          <span class="st-label">КАБИНЕТ РАЗВИТИЯ · ПЕРСОНАЛЬНЫЙ АНАЛИЗ</span>
+          <h3>Диагностика мозга и советы по прокачке</h3>
+        </div>
+        <div class="drc-badges">
+          <span class="rs-badge">ИНДЕКС ${model.overall}</span>
+          ${avgAcc !== null ? `<span class="drc-pill">ТОЧНОСТЬ ${avgAcc}%</span>` : ""}
+          ${avgRt !== null ? `<span class="drc-pill">СРЕДНИЙ RT ${avgRt} мс</span>` : ""}
+        </div>
+      </div>
+
+      <div class="drc-grid">
+        <div class="drc-col drc-diagnosis">
+          <div class="drc-mini-cards">
+            <div class="drc-mini is-strong">
+              <span>СИЛЬНАЯ СТОРОНА</span>
+              <strong>${strongest.label} · ${strongest.score}</strong>
+              <small>Твоя опора — используй в сложных задачах</small>
+            </div>
+            <div class="drc-mini is-weak">
+              <span>ГЛАВНАЯ ТОЧКА РОСТА</span>
+              <strong>${weakest.label} · ${weakest.score}</strong>
+              <small>Даст максимальный прирост Нейроиндекса</small>
+            </div>
+          </div>
+
+          <div class="drc-pace-box">
+            <span class="st-label">ДИАГНОСТИКА ТЕМПА И ОШИБОК</span>
+            <p>${paceTip}</p>
+          </div>
+        </div>
+
+        <div class="drc-col drc-advice">
+          <span class="st-label">3 СОВЕТА НА ЭТУ НЕДЕЛЮ · ${plan.title.toUpperCase()}</span>
+          <ol class="drc-steps">
+            ${plan.steps.map((s) => `<li>${escapeHtml(s)}</li>`).join("")}
+          </ol>
+          <div class="drc-launch-row">
+            <span class="st-label">ЗАПУСТИТЬ ПРОКАЧКУ:</span>
+            <div class="drc-launch-pills">
+              ${plan.drills.filter((id) => MODE_META[id]).map((id) => `
+                <button type="button" class="ghost-action drc-drill-btn" data-mode="${id}">
+                  ${escapeHtml(MODE_META[id].title)} →
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 export function renderPageProgress(refs, state, handlers) {
   const model = getDashboardModel(state);
   const program = getProgram(state);
@@ -1614,6 +1699,8 @@ export function renderPageProgress(refs, state, handlers) {
 
   refs.arena.innerHTML = `
     <div class="progress-grid progress-dashboard-v8" id="progressGrid" data-view="overview">
+
+      ${renderDevelopmentCabinet(state, model, coach, recommended)}
 
       ${renderProgressCockpit(dashboard, model, recommended)}
 

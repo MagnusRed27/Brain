@@ -33,6 +33,7 @@ import {
   applyModeTheme,
   createRefs,
   renderPageCenter,
+  renderPageKnowledge,
   renderPageDrills,
   renderPageDrillDetail,
   renderPageProgress,
@@ -192,10 +193,10 @@ function hideBootScreen() {
 }
 
 function bindGlobalEvents() {
-  document.querySelectorAll(".sidenav-item, .bn-item").forEach((btn) => {
+  document.querySelectorAll(".sidenav-item, .bn-item, .brand-home-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const route = btn.dataset.route;
-      router.navigate(route);
+      if (route) router.navigate(route);
     });
   });
   document.querySelector("#qlTrigger")?.addEventListener("click", () => toggleQuickLaunch());
@@ -568,11 +569,50 @@ function onRoute(route, param = null) {
         if (!front.trim() || !back.trim()) return;
         addCard(front.trim(), back.trim());
       },
+      openKnowledge: () => router.navigate("knowledge"),
+      quickLaunchMode: (mode) => {
+        if (!MODE_META[mode]) return;
+        beginRound(mode);
+      },
     });
     // re-render fact host in center
     if (refs.factHost) {
       renderFactCard(refs.factHost, factRotator.current, () => factRotator.pick());
     }
+  } else if (route === "knowledge") {
+    renderPageKnowledge(refs, getState(), {
+      saveKnowledgeToFsrs: (card) => {
+        const exists = (getState().cards || []).some((c) => c.front === card.question);
+        if (exists) {
+          toast(refs, "Эта карточка уже в твоей колоде FSRS-5.");
+          return;
+        }
+        addCard(card.question, `${card.answer} (${card.source || card.tag})`);
+      },
+      markKnowledgeStudied: (cardId) => {
+        const today = new Date().toISOString().slice(0, 10);
+        store.set((s) => {
+          const prev = s.knowledgeLog?.[today] || [];
+          if (prev.includes(cardId)) return s;
+          return {
+            ...s,
+            knowledgeLog: { ...(s.knowledgeLog || {}), [today]: [...prev, cardId] },
+            profile: {
+              ...s.profile,
+              todayXp: (s.profile.todayXp || 0) + 10,
+              totalXp: (s.profile.totalXp || 0) + 10,
+            },
+          };
+        });
+        sensory.cue("hit");
+        toast(refs, "+10 XP · Стикер изучен и закреплён.");
+      },
+      addCustomKnowledgeCard: (front, back) => {
+        if (!front.trim() || !back.trim()) return;
+        addCard(front.trim(), back.trim());
+      },
+      openRecall: () => beginRound("recall"),
+    });
   } else if (route === "drills" && param && MODE_META[param]) {
     renderPageDrillDetail(refs, getState(), param, {
       openMode: openDrill,
@@ -991,13 +1031,26 @@ function setProgress(value) {
 }
 
 function flashFeedback(type) {
-  const className =
-    type === "miss-near" || type === "miss-bad" || type === "error" ? "feedback-bad" :
-    type === "level-up" || type === "reward" ? "feedback-reward" :
-    "feedback-good";
+  const isMiss = type === "miss-near" || type === "miss-bad" || type === "error";
+  const isReward = type === "level-up" || type === "reward" || type === "combo" || type === "streak";
+  const className = isMiss ? "feedback-bad" : isReward ? "feedback-reward" : "feedback-good";
   refs.arena.classList.remove("feedback-good", "feedback-bad", "feedback-reward");
   void refs.arena.offsetWidth;
   refs.arena.classList.add(className);
+
+  // Combo aura on active arena when streak >= 3
+  const taskMain = refs.arena.querySelector(".task-main");
+  if (taskMain) {
+    taskMain.classList.toggle("is-hot-streak", !isMiss && roundStats.streak >= 3);
+    if (!isMiss && roundStats.streak >= 2) {
+      const pop = document.createElement("span");
+      pop.className = `arena-float-pop ${roundStats.streak >= 5 ? "is-fire" : ""}`;
+      pop.textContent = roundStats.streak >= 5 ? `ПОТОК ×${roundStats.streak}` : `+1 · ×${roundStats.streak}`;
+      taskMain.appendChild(pop);
+      window.setTimeout(() => pop.remove(), 760);
+    }
+  }
+
   // Layered juice: subtle screen shake based on type
   const shakeCls = type === "miss-bad" || type === "error" ? "shake-2" :
                    type === "miss-near" ? "shake-1" :

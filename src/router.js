@@ -1,4 +1,4 @@
-export const ROUTES = ["center", "drills", "progress", "records", "stim", "settings"];
+export const ROUTES = ["center", "knowledge", "drills", "progress", "records", "stim", "settings"];
 
 /**
  * Parse hash into { route, param }.
