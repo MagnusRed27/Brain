@@ -1,56 +1,75 @@
-# NeuroForge v3 «Lumen»
+# 🧠 NeuroForge — Cognitive Training Lab
 
-Адаптивная premium neuro-lab станция для тренировки памяти, внимания, логики, скорости и пространственного мышления. v3 — полный редизайн: светлая ультрасовременная эстетика, профессиональный WebAudio-движок, новые drills, голосовой ввод и опциональная биометрика.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-7c5cff?style=for-the-badge&logo=github)](https://magnusred27.github.io/Brain/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-34c997?style=for-the-badge)](./LICENSE)
+[![Vanilla JS](https://img.shields.io/badge/Vanilla%20ES%20Modules-Vite%205-ffba2e?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 
-## Что нового в v3
+**NeuroForge** — открытая адаптивная neuro-lab станция для тренировки памяти, внимания, исполнительного контроля, логики, скорости реакции и пространственного мышления. Работает **100% локально в браузере** — без аккаунтов, без серверов, без рекламы и трекеров.
 
-- **Три светлые темы** — Aurora (иридесцентный рассвет), Citrus (солнечный заряд), Tide (кобальт-перл). Переключаются мгновенно в настройках.
-- **Resonator audio engine** — master bus с компрессором/лимитером, convolution reverb (room / hall / cathedral), biquad-фильтр усталости, polyphony до 12 голосов, FM-синтез, AnalyserNode для FFT-визуализации, procedural ambient музыка с sidechain ducking, метроном и дыхательный гайд 4-7-8.
-- **Audio-reactive neuro-scene** — частицы и ядро пульсируют по 4 частотным полосам, O(n) через spatial hash, своё настроение под каждую тему.
-- **Новые тренировки**: Reaction Rail (go/no-go), Trail Making (1-А-2-Б…), Stroop Plus, Audio N-back (TTS-голос). Итого 11 модулей.
-- **Голосовой Recall** — кнопка-микрофон для ответа голосом (ru-RU SpeechRecognition).
-- **Биометрика (опционально)** — пульс через камеру (rPPG), всё локально, никаких сетевых вызовов.
-- **Архитектура** — EventBus, реактивный store, AbortController на drills, throttled persistence, миграция v1→v2→v3.
-- **Адаптив** на 1280 / 1024 / 780 px + onboarding-тур.
+> 🚀 **Открыть прямо в браузере:** [https://magnusred27.github.io/Brain/](https://magnusred27.github.io/Brain/)
 
-## Запуск
+---
+
+## ✨ Ключевые возможности
+
+- **23 научно-обоснованных тренажёра** по 6 когнитивным доменам:
+  - **Рабочая память**: Dual N-back (с lures и метрикой $d'$), Audio N-back (TTS), Memory Grid, Backwards Span
+  - **Внимание и контроль**: Stop Signal (SSRT staircase), Stroop Plus, Flanker, Focus Switch, Anti-Saccade, Schulte Table, Trail Making (A+B), Signal Scan
+  - **Память и обучение**: Recall Vault на базе **FSRS-5** (интервальные повторения), Episodic Vault
+  - **Логика и планирование**: Logic Forge, Tower of London, Rule Hunt (WCST-механика), Mental Math
+  - **Скорость и чтение**: Reaction Rail, Digit-Symbol (DSST), RSVP Reading, Verbal Fluency
+  - **Пространственное мышление**: Rotation Lab
+- **Prism UI & 4 темы оформления** — мгновенное переключение в шапке между **Aurora** (иридесцентный рассвет), **Citrus** (солнечный заряд), **Tide** (кобальт-перл) и **Obsidian** (тёмная тема для вечера).
+- **Zen Focus Arena** — во время раунда интерфейс плавно приглушает лишние панели, оставляя чистую сцену для концентрации (`F` — полноэкранный режим).
+- **Жизненные сценарии и 21-дневная программа** — быстрый старт под задачу (*Спринт*, *Адаптив*, *Memory Lab*, *Executive*, *Flow*, *Recovery*), адаптивный подбор сложности, Streak Shield и Daily Challenge.
+- **Resonator WebAudio Engine** — процедурный ambient с sidechain ducking, бинауральные ритмы, дыхательный гайд 4-7-8, FFT-визуализация нейросцены.
+- **Глубокая аналитика и нарратив** — Memory Lane, корреляция сна и точности (Pearson $r$), 365-дневный календарь активности, хронотип по часам суток, метакогнитивная калибровка и генератор Share Card (PNG) при новом рекорде.
+- **Быстрый запуск (`⌘K` / `Ctrl+K`)** — мгновенный поиск любого тренажёра, протокола или режима.
+- **PWA-ready** — можно установить на телефон или рабочий стол и тренироваться оффлайн.
+
+---
+
+## 🚀 Локальный запуск
 
 ```bash
-npm.cmd install
-npm.cmd run dev
+git clone https://github.com/MagnusRed27/Brain.git
+cd Brain
+npm install
+npm run dev
 ```
 
-После запуска откройте локальный адрес Vite, например `http://127.0.0.1:61481/`.
+Сборка production-версии:
 
-## Что внутри
+```bash
+npm run build
+npm run preview
+```
 
-- Vite + vanilla ES modules без React и Phaser.
-- Миграция прогресса `neuroforge:v1` -> `neuroforge:v2`.
-- Маршрут из семи раундов: Dual Stream, Memory Grid, Focus Switch, Logic Forge, Recall Vault, Signal Scan, Rotation Lab.
-- Адаптивная сложность: уровень растет при высокой точности и снижается, если задача стала слишком шумной.
-- Карта навыков: память, рабочая память, внимание, логика, скорость, пространственные образы.
-- Локальное сохранение прогресса в `localStorage`.
-- Карточки активного воспроизведения с интервальным планированием.
-- Живая canvas-нейросцена, WebP-ассеты, мягкий Web Audio/haptics слой и настройки.
+---
 
-## Исследовательская логика
+## 🧪 Научная позиция
 
-Тренажер не обещает "плюс IQ". В исследованиях когнитивные тренировки чаще дают сильный прирост в похожих задачах и слабый или спорный дальний перенос. Поэтому NeuroForge смешивает разные форматы, держит сложность близко к границе возможностей и отдельно тренирует активное воспроизведение.
+NeuroForge **не обещает «+30 IQ за неделю»**. Когнитивные тренировки дают наиболее надёжный эффект в целевых и близких задачах, а также через дисциплину внимания, активное вспоминание (testing effect) и интервальные повторения (FSRS-5). В интерфейсе честно указаны уровни доказательности, а сложность удерживается на границе возможностей.
 
-Использованные принципы:
+---
 
-- активное вспоминание и обратная связь для долговременной памяти;
-- интервальные повторения вместо плотной зубрежки;
-- адаптивная сложность для удержания рабочей нагрузки;
-- вариативность задач, чтобы не сводить прогресс к одному мини-игровому навыку;
-- короткие глубокие сессии и легкие дни повторения.
+## 📁 Архитектура
 
-## Источники
+- `index.html` — оболочка приложения (top-strip, sidebar, bottom-nav, quick-launch, PWA manifest)
+- `src/main.js` — роутинг, lifecycle раундов, Zen Focus, горячие клавиши, store
+- `src/ui.js` — экраны (`Center`, `Drills`, `Progress`, `Records`, `Stim Lab`, `Settings`, `Onboarding`) и SVG-визуализации
+- `src/drills.js`, `src/drills.extra.js`, `src/drills.lab.js` — 23 когнитивных модуля
+- `src/fsrs.js`, `src/progression.js`, `src/analysis.js`, `src/protocols.js` — адаптивность, FSRS-5 и аналитика
+- `src/audio/` — WebAudio-движок (`engine`, `music`, `binaural`, `noise`, `haptics`)
+- `styles.css` — дизайн-система, 4 темы, стекломорфизм и адаптивная вёрстка
 
-- Lampit, Hallock, Valenzuela, 2014, PLOS Medicine: computerized cognitive training in healthy older adults showed a small significant overall effect, with effects depending on domain and design. https://pubmed.ncbi.nlm.nih.gov/25405755/
-- Melby-Lervag, Redick, Hulme, 2016: working-memory training showed reliable intermediate transfer but no convincing far transfer to broader real-world cognitive skills. https://discovery.ucl.ac.uk/id/eprint/10120081/
-- Zhong et al., 2025, Acta Psychologica: visuospatial n-back produced training gains, but no evidence of near or far transfer in a preregistered double-blind RCT. https://www.sciencedirect.com/science/article/pii/S0001691825008121
-- Karpicke and Roediger, 2008, Science: repeated retrieval produced a large positive effect on delayed recall compared with repeated studying. https://brucehayes.org/Teaching/papers/2008_Roediger_Karpicke_Science.pdf
-- Dunlosky et al., 2013: practice testing and distributed practice received high utility ratings across learners and tasks. https://gwern.net/doc/psychology/spaced-repetition/2013-dunlosky.pdf
-- Trumble et al., 2023: distributed practice and retrieval practice improved academic outcomes in a systematic review of health professions education. https://link.springer.com/article/10.1007/s10459-023-10274-3
-- Dale et al., 2023, PLOS One: video-game cognitive interventions showed moderate gains, while publication bias and gameplay factors mattered. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0285925
+---
+
+## 🤝 Участие (Contributing)
+
+Pull requests, идеи новых когнитивных модулей и улучшения дизайна приветствуются!  
+Открывайте Issue или отправляйте PR.
+
+## 📄 Лицензия
+
+Распространяется под лицензией **MIT** — см. файл [LICENSE](./LICENSE).

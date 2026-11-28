@@ -3,14 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0e8f76" />
-    <link rel="icon" type="image/png" sizes="256x256" href="/assets/brand/neuroforge-icon-256.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/neuroforge-icon-180.png" />
-    <link rel="preload" as="image" href="/assets/brand/neuroforge-logo-512.png" />
-    <link rel="preload" as="image" href="/assets/v6/quiet-lab-hero.png" />
-    <link rel="preload" as="image" href="/assets/v6/drills-library-banner.png" />
-    <link rel="preload" as="image" href="/assets/v6/progress-analytics-banner.png" />
-    <title>NeuroForge Lumen | cognitive training lab</title>
+    <meta name="theme-color" content="#7c5cff" />
+    <meta name="description" content="NeuroForge — open-source adaptive cognitive training lab: 23 neuroscience drills, FSRS-5 recall, WebAudio resonator & 21-day protocols." />
+    <meta property="og:title" content="NeuroForge — Cognitive Training Lab" />
+    <meta property="og:description" content="23 neuroscience-inspired cognitive drills, FSRS-5 spaced repetition, WebAudio resonator & deep analytics. 100% local, open source." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="256x256" href="./assets/brand/neuroforge-icon-256.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/brand/neuroforge-icon-180.png" />
+    <link rel="preload" as="image" href="./assets/brand/neuroforge-logo-512.png" />
+    <title>NeuroForge | Cognitive Training Lab</title>
   </head>
   <body>
     <div id="bootScreen" class="boot-screen" role="status" aria-live="polite">
@@ -20,11 +21,11 @@
         <span class="boot-node boot-node-b"></span>
         <span class="boot-node boot-node-c"></span>
         <div class="boot-core">
-          <img src="/assets/brand/neuroforge-logo-512.png" alt="" />
+          <img src="./assets/brand/neuroforge-logo-512.png" alt="" />
         </div>
       </div>
       <div class="boot-copy">
-        <p class="boot-kicker">NeuroForge Lumen</p>
+        <p class="boot-kicker">NeuroForge Prism</p>
         <h1>Запускаю когнитивную станцию</h1>
         <p>Калибрую интерфейс, аудио-движок и персональный маршрут.</p>
       </div>
@@ -43,13 +44,19 @@
     <div class="app-shell">
       <header class="top-strip">
         <div class="brand-block" aria-label="NeuroForge">
-          <div class="brand-mark" aria-hidden="true"><img src="/assets/brand/neuroforge-logo-512.png" alt="" /></div>
+          <div class="brand-mark" aria-hidden="true"><img src="./assets/brand/neuroforge-logo-512.png" alt="" /></div>
           <div class="brand-text">
             <h1>NeuroForge</h1>
-            <p>cognitive training lab / v9</p>
+            <p>cognitive lab · open source</p>
           </div>
         </div>
         <div class="top-metrics" aria-label="Сводка">
+          <div class="quick-theme-pill" id="quickThemeSwitcher" role="group" aria-label="Переключить тему">
+            <button type="button" class="qt-dot" data-qt="aurora" title="Aurora (светлая)" aria-label="Тема Aurora"></button>
+            <button type="button" class="qt-dot" data-qt="citrus" title="Citrus (тёплая)" aria-label="Тема Citrus"></button>
+            <button type="button" class="qt-dot" data-qt="tide" title="Tide (холодная)" aria-label="Тема Tide"></button>
+            <button type="button" class="qt-dot" data-qt="obsidian" title="Obsidian (тёмная)" aria-label="Тема Obsidian"></button>
+          </div>
           <button class="ql-trigger" type="button" id="qlTrigger" aria-label="Быстрый запуск">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             <span>Поиск</span>

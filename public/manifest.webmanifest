@@ -1,0 +1,26 @@
+{
+  "name": "NeuroForge — Cognitive Training Lab",
+  "short_name": "NeuroForge",
+  "description": "Open-source adaptive cognitive training lab: 23 neuroscience drills, FSRS-5 recall, WebAudio resonator & 21-day protocols.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#7c5cff",
+  "icons": [
+    {
+      "src": "./assets/brand/neuroforge-icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/brand/neuroforge-icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/brand/neuroforge-logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

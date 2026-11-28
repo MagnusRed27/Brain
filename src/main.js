@@ -98,10 +98,18 @@ bus.on(EVENTS.AUDIO_UNLOCK, () => {
   }
 });
 
-bus.on(EVENTS.THEME_CHANGE, ({ mood }) => {
+bus.on(EVENTS.THEME_CHANGE, ({ theme, mood }) => {
   scene.setMood(mood);
-  sensoryCore.engine.music?.()?.setTheme(getState().settings.theme || "aurora");
+  sensoryCore.engine.music?.()?.setTheme(theme || getState().settings.theme || "aurora");
+  syncQuickThemeDots(theme || getState().settings.theme || "aurora");
 });
+
+function syncQuickThemeDots(activeId) {
+  document.querySelectorAll("#quickThemeSwitcher [data-qt]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.qt === activeId);
+    btn.setAttribute("aria-pressed", btn.dataset.qt === activeId ? "true" : "false");
+  });
+}
 
 const router = createRouter({
   onChange(route, param) {
@@ -163,11 +171,11 @@ function hideBootScreen() {
     if (scheduled) return;
     scheduled = true;
     const elapsed = performance.now() - bootStartedAt;
-    const wait = Math.max(260, 980 - elapsed);
+    const wait = Math.max(120, 380 - elapsed);
     window.setTimeout(() => {
       boot.classList.add("is-hidden");
       document.body.classList.add("app-ready");
-      window.setTimeout(() => boot.remove(), 900);
+      window.setTimeout(() => boot.remove(), 520);
     }, wait);
   };
   window.requestAnimationFrame(closeBoot);
@@ -182,6 +190,14 @@ function bindGlobalEvents() {
     });
   });
   document.querySelector("#qlTrigger")?.addEventListener("click", () => toggleQuickLaunch());
+  document.querySelectorAll("#quickThemeSwitcher [data-qt]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const nextTheme = btn.dataset.qt;
+      onSettingChange("theme", nextTheme);
+      syncQuickThemeDots(nextTheme);
+    });
+  });
+  syncQuickThemeDots(getState().settings.theme || getStoredTheme() || "aurora");
   document.querySelector("#npStop")?.addEventListener("click", () => {
     stimController.stop();
     hideNowPlaying();

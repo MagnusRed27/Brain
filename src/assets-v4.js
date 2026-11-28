@@ -1,5 +1,6 @@
-const BASE = "/assets/v4-concept";
-const BASE_V6 = "/assets/v6";
+const ROOT = (import.meta.env.BASE_URL || "./").replace(/\/?$/, "/");
+const BASE = `${ROOT}assets/v4-concept`;
+const BASE_V6 = `${ROOT}assets/v6`;
 
 export const V4_ASSETS = {
   heroBackdrops: {

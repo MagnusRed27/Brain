@@ -10331,3 +10331,565 @@ body {
     padding: 12px 14px 14px;
   }
 }
+
+
+/* =========================================================================
+   NeuroForge v12 «Prism Atelier» — Glassmorphic Hierarchy, Quick Theme,
+   Hero Readiness Ring, Scenario Pills, Bento Row & Zen Focus Arena
+   ========================================================================= */
+
+/* --- 1-Click Theme Switcher in Top Strip --------------------------------- */
+.quick-theme-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.qt-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 200ms var(--ease-spring), box-shadow 200ms ease, border-color 200ms ease;
+  position: relative;
+}
+
+.qt-dot[data-qt="aurora"]   { background: linear-gradient(135deg, #7c5cff, #4fd1a8); }
+.qt-dot[data-qt="citrus"]   { background: linear-gradient(135deg, #ffba2e, #ff6f5e); }
+.qt-dot[data-qt="tide"]     { background: linear-gradient(135deg, #2a73ff, #2fd0d8); }
+.qt-dot[data-qt="obsidian"] { background: linear-gradient(135deg, #161c28, #8b7dff); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+
+.qt-dot.is-active {
+  transform: scale(1.18);
+  border-color: var(--text);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+@media (hover: hover) {
+  .qt-dot:hover {
+    transform: scale(1.16);
+  }
+}
+
+/* --- Prism Hero Stage ---------------------------------------------------- */
+.prism-hero-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px !important;
+  padding: 28px 28px 24px !important;
+  border: 1px solid color-mix(in srgb, var(--route-accent, var(--accent)) 28%, var(--line-strong)) !important;
+  box-shadow:
+    0 24px 64px color-mix(in srgb, var(--route-accent, var(--accent)) 14%, rgba(10, 16, 36, 0.10)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+[data-theme="obsidian"] .prism-hero-stage {
+  background:
+    radial-gradient(90% 110% at 92% 0%, color-mix(in srgb, var(--route-accent, var(--accent)) 24%, transparent), transparent 60%),
+    radial-gradient(70% 90% at 8% 100%, rgba(93, 223, 183, 0.12), transparent 60%),
+    linear-gradient(160deg, rgba(24, 31, 46, 0.94), rgba(14, 19, 30, 0.96)) !important;
+  box-shadow:
+    0 28px 72px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+.prism-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.prism-hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.prism-eyebrow-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prism-session-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+}
+
+.prism-hero-stage h3 {
+  font-size: clamp(1.55rem, 2.6vw, 2.05rem) !important;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  margin: 0 0 8px !important;
+}
+
+.prism-duration {
+  font-weight: 500;
+  font-size: 0.62em;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.prism-hero-stage > .prism-hero-top p {
+  max-width: 56ch;
+  color: var(--text-soft);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Readiness Ring SVG */
+.prism-readiness-ring {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex: 0 0 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-strong) 76%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--route-accent, var(--accent)) 18%, transparent);
+}
+
+.prism-readiness-ring svg {
+  width: 80px;
+  height: 80px;
+  transform: rotate(-90deg);
+}
+
+.prism-readiness-ring .pr-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 6;
+}
+
+.prism-readiness-ring .pr-fill {
+  fill: none;
+  stroke: var(--route-accent, var(--accent));
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 600ms var(--ease-out);
+}
+
+.prism-readiness-ring.is-good .pr-fill { stroke: var(--success); }
+.prism-readiness-ring.is-warn .pr-fill { stroke: var(--warning); }
+.prism-readiness-ring.is-bad  .pr-fill { stroke: var(--danger); }
+
+.prism-readiness-ring .pr-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.prism-readiness-ring .pr-center strong {
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.prism-readiness-ring .pr-center small {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* 4 Life Scenario Pills */
+.prism-scenarios {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.prism-scenario-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-strong) 74%, transparent);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 180ms var(--ease-out), border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.prism-scenario-pill .ps-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.prism-scenario-pill .ps-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.prism-scenario-pill strong {
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.prism-scenario-pill small {
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prism-scenario-pill.is-active {
+  border-color: var(--route-accent, var(--accent));
+  background: color-mix(in srgb, var(--route-accent, var(--accent)) 14%, var(--surface-strong));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--route-accent, var(--accent)) 18%, transparent);
+}
+
+@media (hover: hover) {
+  .prism-scenario-pill:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--route-accent, var(--accent)) 55%, var(--line));
+  }
+}
+
+/* Hero Bottom Row */
+.prism-hero-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.prism-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px !important;
+  font-size: 0.96rem !important;
+  font-weight: 700 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--route-accent, var(--accent)) 36%, transparent) !important;
+}
+
+.prism-cta .cta-arrow {
+  transition: transform 200ms var(--ease-spring);
+}
+
+@media (hover: hover) {
+  .prism-cta:hover .cta-arrow {
+    transform: translateX(4px);
+  }
+}
+
+.prism-kpi-strip {
+  display: flex !important;
+  gap: 10px !important;
+  margin: 0 !important;
+}
+
+.prism-kpi-strip .hero-stat {
+  padding: 8px 14px !important;
+  border-radius: 14px !important;
+  min-width: 76px;
+}
+
+.prism-kpi-strip .hero-stat.is-due {
+  border-color: color-mix(in srgb, var(--success) 55%, var(--line)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+/* --- Unified 3-Card Bento Action Row ------------------------------------- */
+.prism-bento-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.prism-bento-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(80% 70% at 100% 0%, color-mix(in srgb, var(--bento-accent, var(--accent)) 12%, transparent), transparent 65%),
+    var(--surface-strong);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition: transform 220ms var(--ease-out), border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.prism-bento-card.is-coach {
+  cursor: default;
+}
+
+@media (hover: hover) {
+  button.prism-bento-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--bento-accent, var(--accent)) 55%, var(--line));
+    box-shadow: 0 18px 40px color-mix(in srgb, var(--bento-accent, var(--accent)) 16%, rgba(10, 16, 36, 0.10));
+  }
+}
+
+.pb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pb-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--bento-accent, var(--accent));
+  background: color-mix(in srgb, var(--bento-accent, var(--accent)) 14%, transparent);
+}
+
+.pb-level {
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.prism-bento-card strong {
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.prism-bento-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+  flex: 1;
+}
+
+.pb-meter {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.pb-meter span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--bento-accent, var(--accent)), var(--accent-2));
+}
+
+.pb-foot {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--bento-accent, var(--accent));
+  margin-top: 2px;
+}
+
+.pb-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.pb-link-btn {
+  padding: 6px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+@media (hover: hover) {
+  .pb-link-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+}
+
+/* --- Protocols Studio Header & Collapsible Aside Drawer ------------------ */
+.prism-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.prism-hint-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.prism-aside-drawer {
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.prism-drawer-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  cursor: pointer;
+  user-select: none;
+}
+
+.prism-drawer-summary::-webkit-details-marker {
+  display: none;
+}
+
+.prism-drawer-chevron {
+  transition: transform 220ms var(--ease-out);
+  color: var(--muted);
+}
+
+.prism-aside-drawer[open] .prism-drawer-chevron {
+  transform: rotate(180deg);
+}
+
+.prism-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 14px 14px;
+}
+
+/* --- Zen Focus Arena (distraction-free during active drill) -------------- */
+body.stage-focus .sidenav {
+  opacity: 0.22;
+  transition: opacity 320ms var(--ease-out);
+}
+
+body.stage-focus .sidenav:hover {
+  opacity: 1;
+}
+
+body.stage-focus .top-strip {
+  opacity: 0.55;
+  transition: opacity 320ms var(--ease-out);
+}
+
+body.stage-focus .top-strip:hover {
+  opacity: 1;
+}
+
+/* --- Responsive Polish --------------------------------------------------- */
+@media (max-width: 1120px) {
+  .prism-scenarios {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .prism-bento-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .prism-hero-stage {
+    padding: 20px 18px !important;
+  }
+  .prism-hero-top {
+    flex-direction: column;
+  }
+  .prism-readiness-ring {
+    width: 68px;
+    height: 68px;
+    flex-basis: 68px;
+  }
+  .prism-readiness-ring svg {
+    width: 64px;
+    height: 64px;
+  }
+  .prism-scenarios {
+    grid-template-columns: 1fr 1fr;
+  }
+  .top-metrics .metric-combo,
+  .top-metrics .metric-pill:nth-of-type(4) {
+    display: none;
+  }
+  .quick-theme-pill {
+    padding: 4px 6px;
+    gap: 5px;
+  }
+  .qt-dot {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* --- Micro-polish: protocol badge spacing & daily challenge contrast ----- */
+.protocol-card .protocol-suggested {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  max-width: calc(100% - 46px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.protocol-card .protocol-dot {
+  margin-top: 2px;
+}
+
+.dc-badge {
+  color: #141926 !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
