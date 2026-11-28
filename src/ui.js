@@ -286,12 +286,12 @@ function renderLivingBrainSvg(domains = {}, overall = 41, readiness = 72) {
     spatial: Math.round(domains.spatial ?? 39),
   };
   const nodes = [
-    { id: "focus",   label: "Внимание", x: 74,  y: 66,  val: d.focus,   mode: "stroop" },
-    { id: "wm",      label: "Раб. память", x: 118, y: 42, val: d.wm,   mode: "nback" },
-    { id: "logic",   label: "Логика",   x: 168, y: 64,  val: d.logic,   mode: "logic" },
-    { id: "memory",  label: "Память",   x: 148, y: 110, val: d.memory,  mode: "recall" },
-    { id: "spatial", label: "Образы",   x: 192, y: 98,  val: d.spatial, mode: "rotate" },
-    { id: "speed",   label: "Скорость", x: 96,  y: 112, val: d.speed,   mode: "reaction" },
+    { id: "focus",   code: "ATT", label: "Внимание",    x: 74,  y: 66,  val: d.focus,   mode: "stroop" },
+    { id: "wm",      code: "WM",  label: "Раб. память", x: 118, y: 42,  val: d.wm,      mode: "nback" },
+    { id: "logic",   code: "LOG", label: "Логика",      x: 168, y: 64,  val: d.logic,   mode: "logic" },
+    { id: "memory",  code: "MEM", label: "Память",      x: 148, y: 110, val: d.memory,  mode: "recall" },
+    { id: "spatial", code: "VIS", label: "Образы",      x: 192, y: 98,  val: d.spatial, mode: "rotate" },
+    { id: "speed",   code: "SPD", label: "Скорость",    x: 96,  y: 112, val: d.speed,   mode: "reaction" },
   ];
   const curves = [
     "M74 66 Q96 44 118 42",
@@ -306,34 +306,39 @@ function renderLivingBrainSvg(domains = {}, overall = 41, readiness = 72) {
     "M168 64 Q152 88 148 110",
   ];
   return `
-    <div class="living-brain-widget">
+    <div class="living-brain-widget cyber-cortex-hud">
       <div class="lb-head">
-        <span class="lb-kicker">Нейронная карта</span>
-        <span class="lb-ready">готовность ${readiness}%</span>
+        <span class="lb-kicker">CORTEX TELEMETRY // 06 ZONES</span>
+        <span class="lb-ready">SYNC ${readiness}%</span>
       </div>
-      <svg class="living-brain-svg" viewBox="0 0 248 164" role="img" aria-label="Интерактивная нейронная карта 6 зон мозга">
+      <svg class="living-brain-svg" viewBox="0 0 248 164" role="img" aria-label="Футуристическая нейронная телеметрия 6 зон мозга">
         <defs>
-          <radialGradient id="brainAura" cx="50%" cy="48%" r="50%">
-            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.20"/>
-            <stop offset="55%" stop-color="var(--accent-2)" stop-opacity="0.06"/>
+          <radialGradient id="brainAura" cx="50%" cy="48%" r="52%">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.24"/>
+            <stop offset="55%" stop-color="var(--accent-2)" stop-opacity="0.08"/>
             <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <ellipse cx="128" cy="82" rx="108" ry="68" fill="url(#brainAura)"/>
-        <!-- Delicate layered orbital rings -->
-        <ellipse cx="128" cy="82" rx="94" ry="56" fill="none" stroke="var(--line)" stroke-width="0.8" stroke-dasharray="2 4"/>
-        <!-- Fine anatomical cortex contour -->
+        <ellipse cx="128" cy="82" rx="112" ry="70" fill="url(#brainAura)"/>
+        <!-- Holographic telemetry radar rings & axis hairlines -->
+        <line x1="20" y1="82" x2="236" y2="82" stroke="var(--accent)" stroke-opacity="0.10" stroke-width="0.6"/>
+        <line x1="128" y1="12" x2="128" y2="152" stroke="var(--accent)" stroke-opacity="0.10" stroke-width="0.6"/>
+        <circle cx="128" cy="82" r="56" fill="none" stroke="var(--accent)" stroke-opacity="0.14" stroke-width="0.7" stroke-dasharray="2 4"/>
+        <circle class="hud-scanner" cx="128" cy="82" r="68" fill="none" stroke="var(--accent)" stroke-opacity="0.28" stroke-width="0.9" stroke-dasharray="18 54 6 30"/>
+        <!-- Fine holographic cortex contour -->
         <path class="lb-silhouette" d="M66 116 C44 110 38 86 48 66 C54 48 72 36 92 32 C108 20 136 18 156 28 C178 28 200 44 206 66 C216 80 212 104 196 116 C182 126 164 128 148 124 C140 134 128 142 122 150 C118 140 112 132 106 128 C90 128 76 122 66 116 Z" />
         <path class="lb-fold" d="M80 54 C96 62 110 60 124 52 M138 44 C154 54 168 54 182 48 M68 86 C86 82 104 88 118 96 M140 84 C156 80 174 84 190 92" />
-        <!-- Flowing curved synaptic pathways -->
+        <!-- Flowing cyan/blue synaptic energy paths -->
         ${curves.map((pathD, idx) => `<path class="lb-synapse" d="${pathD}" fill="none" style="--d:${(idx * 0.35).toFixed(2)}s" />`).join("")}
-        <!-- Interactive domain constellation nodes -->
+        <!-- Interactive telemetry nodes -->
         ${nodes.map((n, idx) => {
-          const r = 4.2 + (Math.min(100, Math.max(20, n.val)) / 100) * 3.2;
+          const r = 3.8 + (Math.min(100, Math.max(20, n.val)) / 100) * 2.6;
           return `
             <g class="lb-node" data-center-mode="${n.mode}" style="--d:${(idx * 0.4).toFixed(2)}s" tabindex="0" role="button" aria-label="${n.label}: ${n.val}">
-              <circle class="lb-node-halo" cx="${n.x}" cy="${n.y}" r="${(r + 6.5).toFixed(1)}" />
+              <circle class="lb-node-halo" cx="${n.x}" cy="${n.y}" r="${(r + 7).toFixed(1)}" />
+              <circle cx="${n.x}" cy="${n.y}" r="${(r + 3.2).toFixed(1)}" fill="none" stroke="var(--accent)" stroke-opacity="0.45" stroke-width="0.7"/>
               <circle class="lb-node-core" cx="${n.x}" cy="${n.y}" r="${r.toFixed(1)}" />
+              <text x="${n.x}" y="${(n.y - r - 5).toFixed(1)}" text-anchor="middle" class="hud-node-tag">${n.code}</text>
               <title>${n.label} — ${n.val}/100 (клик для тренировки)</title>
             </g>
           `;

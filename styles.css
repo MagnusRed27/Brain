@@ -2,7 +2,7 @@
    NeuroForge v4 «Cortex Split» — sidebar layout + page routing + animations
    ========================================================================= */
 
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap");
+/* Fonts bundled locally via @fontsource/manrope & @fontsource/jetbrains-mono */
 
 :root {
   --font-sans: "Outfit", "Inter Tight", "Inter", "Segoe UI", system-ui, sans-serif;

@@ -1,3 +1,11 @@
+import "@fontsource/manrope/400.css";
+import "@fontsource/manrope/500.css";
+import "@fontsource/manrope/600.css";
+import "@fontsource/manrope/700.css";
+import "@fontsource/manrope/800.css";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/600.css";
+import "@fontsource/jetbrains-mono/700.css";
 import "../styles.css";
 import "./studio-theme.css";
 import { DRILL_IDS, MODE_META } from "./config.js";
@@ -122,7 +130,7 @@ init();
 
 function init() {
   updateBootStatus("Загружаю тему и состояние...");
-  const theme = getState().settings.theme || getStoredTheme() || "aurora";
+  const theme = getState().settings.theme || getStoredTheme() || "obsidian";
   applyTheme(theme);
   scene.setMood(getThemeMood(theme));
   updateBootStatus("Собираю интерфейс и маршруты...");
