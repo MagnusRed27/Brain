@@ -523,6 +523,43 @@ function onRoute(route, param = null) {
         store.set((s) => removeGoalFn(s, id));
         onRoute("center");
       },
+      toggleAmbientMusic: () => {
+        sensoryCore.engine.unlock();
+        const next = !getState().settings.musicEnabled;
+        onSettingChange("musicEnabled", next);
+        toast(refs, next ? "Фоновый ambient включён." : "Фоновая музыка выключена.");
+        return next;
+      },
+      saveKnowledgeToFsrs: (card) => {
+        const exists = (getState().cards || []).some((c) => c.front === card.question);
+        if (exists) {
+          toast(refs, "Эта карточка уже в твоей колоде FSRS-5.");
+          return;
+        }
+        addCard(card.question, `${card.answer} (${card.source || card.tag})`);
+      },
+      markKnowledgeStudied: (cardId) => {
+        const today = new Date().toISOString().slice(0, 10);
+        store.set((s) => {
+          const prev = s.knowledgeLog?.[today] || [];
+          if (prev.includes(cardId)) return s;
+          return {
+            ...s,
+            knowledgeLog: { ...(s.knowledgeLog || {}), [today]: [...prev, cardId] },
+            profile: {
+              ...s.profile,
+              todayXp: (s.profile.todayXp || 0) + 10,
+              totalXp: (s.profile.totalXp || 0) + 10,
+            },
+          };
+        });
+        sensory.cue("hit");
+        toast(refs, "+10 XP · Карточка изучена и закреплена.");
+      },
+      addCustomKnowledgeCard: (front, back) => {
+        if (!front.trim() || !back.trim()) return;
+        addCard(front.trim(), back.trim());
+      },
     });
     // re-render fact host in center
     if (refs.factHost) {

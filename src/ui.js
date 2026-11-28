@@ -26,6 +26,7 @@ import { getCircadianTip } from "./facts.js";
 import { getScience } from "./drill-science.js";
 import { getProgram, getCurrentProgramDay, getProgramDay, getProgramSummary, getProgramStreak, isTodayDone, PROGRAM_DAYS } from "./program.js";
 import { GOAL_TEMPLATES, evaluateGoal, getActiveGoals, describeGoal } from "./goals.js";
+import { KNOWLEDGE_DOMAINS, KNOWLEDGE_CARDS, getKnowledgeByDomain, getRitualContext } from "./knowledge-feed.js";
 
 export function createRefs() {
   return {
@@ -101,6 +102,180 @@ function pluralRu(n, forms) {
   return forms[2];
 }
 
+function getRitualSvg(period) {
+  if (period === "morning") {
+    return `
+      <svg class="ritual-svg is-coffee" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path class="steam-1" d="M16 14c0-2.5 2-3.5 2-6"/>
+        <path class="steam-2" d="M22 13c0-2.5 2-3.5 2-6"/>
+        <path class="steam-3" d="M28 14c0-2.5 2-3.5 2-6"/>
+        <path d="M11 20h21v12a9 9 0 0 1-9 9h-3a9 9 0 0 1-9-9V20z"/>
+        <path d="M32 23h4a4 4 0 0 1 0 8h-4"/>
+        <line x1="8" y1="44" x2="36" y2="44"/>
+      </svg>`;
+  }
+  if (period === "day") {
+    return `
+      <svg class="ritual-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="24" cy="24" r="9"/>
+        <line x1="24" y1="6" x2="24" y2="11"/>
+        <line x1="24" y1="37" x2="24" y2="42"/>
+        <line x1="6" y1="24" x2="11" y2="24"/>
+        <line x1="37" y1="24" x2="42" y2="24"/>
+        <line x1="11.3" y1="11.3" x2="14.8" y2="14.8"/>
+        <line x1="33.2" y1="33.2" x2="36.7" y2="36.7"/>
+        <line x1="36.7" y1="11.3" x2="33.2" y2="14.8"/>
+        <line x1="14.8" y1="33.2" x2="11.3" y2="36.7"/>
+      </svg>`;
+  }
+  if (period === "evening") {
+    return `
+      <svg class="ritual-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M14 28a10 10 0 0 1 20 0"/>
+        <line x1="6" y1="28" x2="42" y2="28"/>
+        <line x1="12" y1="35" x2="36" y2="35"/>
+        <line x1="18" y1="41" x2="30" y2="41"/>
+        <line x1="24" y1="10" x2="24" y2="14"/>
+      </svg>`;
+  }
+  return `
+    <svg class="ritual-svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M31 12a13 13 0 1 0 5 21 10 10 0 1 1-5-21z"/>
+      <circle cx="34" cy="14" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="39" cy="21" r="1" fill="currentColor" stroke="none"/>
+    </svg>`;
+}
+
+function renderRitualBar(state) {
+  const ritual = getRitualContext();
+  const musicOn = Boolean(state.settings?.musicEnabled);
+  const nowStr = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  return `
+    <section class="studio-ritual-bar" data-period="${ritual.period}">
+      <div class="srb-left">
+        <div class="srb-icon" aria-hidden="true">${getRitualSvg(ritual.period)}</div>
+        <div class="srb-copy">
+          <div class="srb-kicker-row">
+            <span class="st-label">${ritual.kicker}</span>
+            <span class="srb-clock">${nowStr}</span>
+          </div>
+          <h4>${ritual.title}</h4>
+          <p>${ritual.sub}</p>
+        </div>
+      </div>
+      <div class="srb-controls">
+        <button type="button" class="srb-music-btn ${musicOn ? "is-playing" : ""}" id="ritualMusicBtn" aria-pressed="${musicOn ? "true" : "false"}">
+          <span class="srb-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="srb-music-text">
+            <strong>${musicOn ? "Ambient играет" : "Фоновая музыка"}</strong>
+            <small>${musicOn ? "WebAudio · выключить" : "Спокойный фокус · вкл."}</small>
+          </span>
+        </button>
+        <button type="button" class="ghost-action srb-jump" id="ritualJumpLearn">Изучить сегодня ↓</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderLearnTodayShell(state) {
+  const today = new Date().toISOString().slice(0, 10);
+  const studiedIds = state.knowledgeLog?.[today] || [];
+  return `
+    <section class="studio-learn-section" id="learnTodaySection">
+      <div class="sls-header">
+        <div class="sls-title-wrap">
+          <span class="st-label">ИЗУЧИТЬ СЕГОДНЯ · ПЕРСОНАЛЬНЫЙ БРИФ</span>
+          <h4>Наука, математика, ИИ и антиэйджинг</h4>
+        </div>
+        <div class="sls-head-actions">
+          <span class="sls-progress-pill" id="learnProgressPill">${studiedIds.length} / 4 ИЗУЧЕНО</span>
+          <button type="button" class="ghost-action sls-btn" id="learnShuffleBtn">Другая подборка ↻</button>
+          <button type="button" class="ghost-action sls-btn" id="learnAddToggle">+ Своя карточка</button>
+        </div>
+      </div>
+
+      <div class="sls-tabs" id="learnDomainTabs" role="tablist" aria-label="Темы изучения">
+        ${KNOWLEDGE_DOMAINS.map((d, idx) => `
+          <button type="button" class="sls-tab ${idx === 0 ? "is-active" : ""}" data-kdomain="${d.id}" role="tab" aria-selected="${idx === 0 ? "true" : "false"}">
+            <span>${d.code}</span> ${d.label}
+          </button>
+        `).join("")}
+      </div>
+
+      <form class="sls-custom-form" id="learnCustomForm" hidden>
+        <div class="sls-cf-grid">
+          <input type="text" id="learnCustomFront" placeholder="Вопрос или заголовок новости (например: Что такое test-time compute?)" required />
+          <input type="text" id="learnCustomBack" placeholder="Ключевой ответ / суть для запоминания в FSRS-5" required />
+        </div>
+        <div class="sls-cf-actions">
+          <button type="submit" class="primary-action">Сохранить в Recall Vault (FSRS-5)</button>
+          <button type="button" class="ghost-action" id="learnCustomCancel">Отмена</button>
+        </div>
+      </form>
+
+      <div class="sls-cards-grid" id="learnCardsGrid"></div>
+    </section>
+  `;
+}
+
+function renderKnowledgeCardHtml(card, state) {
+  const today = new Date().toISOString().slice(0, 10);
+  const studied = (state.knowledgeLog?.[today] || []).includes(card.id);
+  const inFsrs = (state.cards || []).some((c) => c.front === card.question);
+  const domInfo = KNOWLEDGE_DOMAINS.find((d) => d.id === card.domain) || KNOWLEDGE_DOMAINS[1];
+
+  return `
+    <article class="kcard ${studied ? "is-studied" : ""}" data-kid="${card.id}" data-domain="${card.domain}">
+      <div class="kcard-face kcard-front">
+        <div class="kcard-top">
+          <span class="kcard-domain">${domInfo.code} / ${domInfo.label.toUpperCase()}</span>
+          <span class="kcard-tag">${escapeHtml(card.tag)}</span>
+        </div>
+        <h5>${escapeHtml(card.title)}</h5>
+        <p class="kcard-body">${escapeHtml(card.body)}</p>
+        <div class="kcard-takeaway">
+          <span>ПРИНЦИП</span>
+          <p>${escapeHtml(card.takeaway)}</p>
+        </div>
+        <cite class="kcard-source">${escapeHtml(card.source)}</cite>
+        <div class="kcard-actions">
+          <button type="button" class="kcard-btn is-flip" data-kflip="${card.id}">Проверить память ↻</button>
+          <button type="button" class="kcard-btn ${inFsrs ? "is-saved" : ""}" data-kfsrs="${card.id}">
+            ${inFsrs ? "✓ В FSRS-5" : "+ В FSRS-5"}
+          </button>
+          <button type="button" class="kcard-btn ${studied ? "is-done" : ""}" data-kdone="${card.id}">
+            ${studied ? "✓ Изучено" : "Изучено"}
+          </button>
+        </div>
+      </div>
+
+      <div class="kcard-face kcard-back" hidden>
+        <div class="kcard-top">
+          <span class="kcard-domain is-accent">АКТИВНОЕ ВСПОМИНАНИЕ</span>
+          <button type="button" class="kcard-back-close" data-kflip="${card.id}">← К карточке</button>
+        </div>
+        <div class="kcard-q-block">
+          <span class="st-label">ВОПРОС ДЛЯ ПРОВЕРКИ</span>
+          <h5>${escapeHtml(card.question)}</h5>
+        </div>
+        <div class="kcard-a-block" data-kanswer="${card.id}" hidden>
+          <span class="st-label">ОТВЕТ</span>
+          <p>${escapeHtml(card.answer)}</p>
+        </div>
+        <div class="kcard-actions">
+          <button type="button" class="primary-action kcard-reveal-btn" data-kreveal="${card.id}">Показать ответ</button>
+          <button type="button" class="kcard-btn ${inFsrs ? "is-saved" : ""}" data-kfsrs="${card.id}">
+            ${inFsrs ? "✓ В FSRS-5" : "+ В FSRS-5"}
+          </button>
+          <button type="button" class="kcard-btn ${studied ? "is-done" : ""}" data-kdone="${card.id}">
+            ${studied ? "✓ Запомнил" : "Запомнил (+10 XP)"}
+          </button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 export function renderPageCenter(refs, state, handlers) {
   setPageHeader(refs, "командный центр", getTimeGreeting(), "");
   const model = getDashboardModel(state);
@@ -151,6 +326,8 @@ export function renderPageCenter(refs, state, handlers) {
       ${program ? renderProgramHero(state, programDay, programInfo, programSummary, programTodayDone) : ""}
 
       <div class="center-main">
+        ${renderRitualBar(state)}
+
         <section class="studio-hero" style="--route-accent:${selected.accent}">
           <div class="studio-hero-main">
             <div class="studio-meta-bar">
@@ -255,6 +432,8 @@ export function renderPageCenter(refs, state, handlers) {
             </div>
           </div>
         </section>
+
+        ${renderLearnTodayShell(state)}
 
         <section class="protocols-grid-card studio-protocols">
           <div class="studio-sec-head">
@@ -406,6 +585,127 @@ export function renderPageCenter(refs, state, handlers) {
     refs.arena.querySelector("#goalsLib")?.toggleAttribute("hidden");
   });
   refs.factHost = refs.arena.querySelector("#centerFact");
+
+  // --- Ritual Bar: Ambient Music toggle & jump to Learn Today ---
+  const musicBtn = refs.arena.querySelector("#ritualMusicBtn");
+  musicBtn?.addEventListener("click", () => {
+    const isNowOn = handlers.toggleAmbientMusic?.();
+    musicBtn.classList.toggle("is-playing", Boolean(isNowOn));
+    musicBtn.setAttribute("aria-pressed", isNowOn ? "true" : "false");
+    const strong = musicBtn.querySelector("strong");
+    const small = musicBtn.querySelector("small");
+    if (strong) strong.textContent = isNowOn ? "Ambient играет" : "Фоновая музыка";
+    if (small) small.textContent = isNowOn ? "WebAudio · выключить" : "Спокойный фокус · вкл.";
+  });
+  refs.arena.querySelector("#ritualJumpLearn")?.addEventListener("click", () => {
+    refs.arena.querySelector("#learnTodaySection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  // --- Learn Today Knowledge Deck ---
+  let kDomain = "all";
+  let kOffset = 0;
+  const kGrid = refs.arena.querySelector("#learnCardsGrid");
+  const kPill = refs.arena.querySelector("#learnProgressPill");
+
+  function renderKnowledgeDeck() {
+    if (!kGrid) return;
+    const cards = getKnowledgeByDomain(kDomain, kOffset);
+    kGrid.innerHTML = cards.map((card) => renderKnowledgeCardHtml(card, state)).join("");
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const doneCount = (state.knowledgeLog?.[todayKey] || []).length;
+    if (kPill) kPill.textContent = `${doneCount} / 4 ИЗУЧЕНО`;
+
+    kGrid.querySelectorAll("[data-kflip]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const article = btn.closest(".kcard");
+        if (!article) return;
+        const front = article.querySelector(".kcard-front");
+        const back = article.querySelector(".kcard-back");
+        const showingBack = !back.hidden;
+        front.hidden = !showingBack;
+        back.hidden = showingBack;
+        article.classList.toggle("is-flipped", !showingBack);
+      });
+    });
+
+    kGrid.querySelectorAll("[data-kreveal]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const article = btn.closest(".kcard");
+        const ans = article?.querySelector(`[data-kanswer="${btn.dataset.kreveal}"]`);
+        if (ans) ans.hidden = false;
+        btn.hidden = true;
+      });
+    });
+
+    kGrid.querySelectorAll("[data-kfsrs]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const card = KNOWLEDGE_CARDS.find((c) => c.id === btn.dataset.kfsrs);
+        if (!card) return;
+        handlers.saveKnowledgeToFsrs?.(card);
+        const article = btn.closest(".kcard");
+        article?.querySelectorAll(`[data-kfsrs="${card.id}"]`).forEach((b) => {
+          b.classList.add("is-saved");
+          b.textContent = "✓ В FSRS-5";
+        });
+      });
+    });
+
+    kGrid.querySelectorAll("[data-kdone]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.kdone;
+        handlers.markKnowledgeStudied?.(id);
+        const todayStr = new Date().toISOString().slice(0, 10);
+        state.knowledgeLog = state.knowledgeLog || {};
+        state.knowledgeLog[todayStr] = state.knowledgeLog[todayStr] || [];
+        if (!state.knowledgeLog[todayStr].includes(id)) state.knowledgeLog[todayStr].push(id);
+        const article = btn.closest(".kcard");
+        article?.classList.add("is-studied");
+        article?.querySelectorAll(`[data-kdone="${id}"]`).forEach((b) => {
+          b.classList.add("is-done");
+          b.textContent = "✓ Изучено";
+        });
+        if (kPill) kPill.textContent = `${state.knowledgeLog[todayStr].length} / 4 ИЗУЧЕНО`;
+      });
+    });
+  }
+
+  refs.arena.querySelectorAll("#learnDomainTabs [data-kdomain]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      kDomain = tab.dataset.kdomain;
+      kOffset = 0;
+      refs.arena.querySelectorAll("#learnDomainTabs [data-kdomain]").forEach((t) => {
+        t.classList.toggle("is-active", t === tab);
+        t.setAttribute("aria-selected", t === tab ? "true" : "false");
+      });
+      renderKnowledgeDeck();
+    });
+  });
+
+  refs.arena.querySelector("#learnShuffleBtn")?.addEventListener("click", () => {
+    kOffset += 1;
+    renderKnowledgeDeck();
+  });
+
+  const customForm = refs.arena.querySelector("#learnCustomForm");
+  refs.arena.querySelector("#learnAddToggle")?.addEventListener("click", () => {
+    if (customForm) customForm.hidden = !customForm.hidden;
+  });
+  refs.arena.querySelector("#learnCustomCancel")?.addEventListener("click", () => {
+    if (customForm) customForm.hidden = true;
+  });
+  customForm?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = refs.arena.querySelector("#learnCustomFront");
+    const b = refs.arena.querySelector("#learnCustomBack");
+    if (f?.value.trim() && b?.value.trim()) {
+      handlers.addCustomKnowledgeCard?.(f.value, b.value);
+      f.value = "";
+      b.value = "";
+      customForm.hidden = true;
+    }
+  });
+
+  renderKnowledgeDeck();
 }
 
 function renderCenterMissionDeck(state, protocol, plan, coach) {
