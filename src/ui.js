@@ -1009,49 +1009,55 @@ export function renderPageDrills(refs, state, handlers) {
   `);
 
   refs.arena.innerHTML = `
-    <section class="drills-command-panel" style="--panel-art:url(${getV6Banner("drills")})">
-      <div class="panel-copy">
-        <div class="progress-kicker">рабочая библиотека</div>
+    <section class="drills-command-panel studio-drills-head">
+      <div class="sdh-main">
+        <span class="st-label">КАТАЛОГ / ${DRILL_IDS.length} КОГНИТИВНЫХ МОДУЛЯ</span>
         <h3>${primeMeta?.title || "Персональный стек"}</h3>
-        <p>${primeMeta?.objective || "Собери свой набор модулей и запускай его без лишних переходов."}</p>
+        <p>${primeMeta?.objective || "Собери свой набор модулей и запускай без лишних переходов."}</p>
         <div class="panel-actions">
-          <button class="primary-action" type="button" id="startRecommendedDrills">Рекомендованный стек</button>
-          <button class="ghost-action" type="button" id="startFavoriteDrills">Избранное</button>
-          <button class="ghost-action" type="button" id="showFavoriteDrills">Показать закрепленные</button>
+          <button class="primary-action" type="button" id="startRecommendedDrills">Запустить умный стек →</button>
+          <button class="ghost-action" type="button" id="startFavoriteDrills">Избранное (${favoriteList.length})</button>
+          <button class="ghost-action" type="button" id="showFavoriteDrills">Фильтр избранного</button>
         </div>
       </div>
-      <div class="panel-metrics" aria-label="Сводка библиотеки">
-        <div><strong>${DRILL_IDS.length}</strong><small>модулей</small></div>
-        <div><strong>${favoriteList.length}</strong><small>закреплено</small></div>
-        <div><strong>${Math.round(getModeNeed(state, primeMode))}</strong><small>приоритет</small></div>
-      </div>
-      <div class="panel-stack" aria-label="Рекомендации">
-        ${recommended.slice(0, 3).map((mode) => {
-          const meta = MODE_META[mode];
-          return `<button class="panel-stack-item" type="button" data-stack-mode="${mode}">
-            <span>${meta.code}</span>
-            <strong>${meta.title}</strong>
-          </button>`;
-        }).join("")}
+      <div class="sdh-side">
+        <div class="sdh-kpis" aria-label="Сводка библиотеки">
+          <div><span>МОДУЛЕЙ</span><strong>${DRILL_IDS.length}</strong></div>
+          <div><span>ИЗБРАННОЕ</span><strong>${favoriteList.length}</strong></div>
+          <div><span>ПРИОРИТЕТ</span><strong>${Math.round(getModeNeed(state, primeMode))}</strong></div>
+        </div>
+        <div class="sdh-quick" aria-label="Рекомендации">
+          <span class="st-label">ТОП-3 СЕЙЧАС</span>
+          <div class="sdh-quick-list">
+            ${recommended.slice(0, 3).map((mode, idx) => {
+              const meta = MODE_META[mode];
+              return `<button class="sdh-quick-item" type="button" data-stack-mode="${mode}">
+                <span class="sdh-q-num">${String(idx + 1).padStart(2, "0")}</span>
+                <strong>${meta.title}</strong>
+                <span class="sdh-q-code">${meta.code}</span>
+              </button>`;
+            }).join("")}
+          </div>
+        </div>
       </div>
     </section>
-    <section class="drills-toolbar-v10" aria-label="инструменты библиотеки">
-      <label class="drill-search">
-        <span>⌕</span>
-        <input id="drillSearch" type="search" placeholder="Найти drill, домен или цель" autocomplete="off" />
+    <section class="drills-toolbar-v10 studio-drills-bar" aria-label="инструменты библиотеки">
+      <label class="drill-search studio-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="drillSearch" type="search" placeholder="Найти модуль, домен или когнитивную цель..." autocomplete="off" />
       </label>
       <div class="drill-sort" aria-label="сортировка">
-        <button class="chip is-active" type="button" data-drill-sort="recommended">умно</button>
-        <button class="chip" type="button" data-drill-sort="level">уровень</button>
-        <button class="chip" type="button" data-drill-sort="accuracy">точность</button>
-        <button class="chip" type="button" data-drill-sort="duration">короткие</button>
+        <button class="chip is-active" type="button" data-drill-sort="recommended">Умно</button>
+        <button class="chip" type="button" data-drill-sort="level">Уровень</button>
+        <button class="chip" type="button" data-drill-sort="accuracy">Точность</button>
+        <button class="chip" type="button" data-drill-sort="duration">Короткие</button>
       </div>
       <div class="drill-density" aria-label="плотность">
-        <button class="chip ${density === "visual" ? "is-active" : ""}" type="button" data-drill-density="visual">карточки</button>
-        <button class="chip ${density === "compact" ? "is-active" : ""}" type="button" data-drill-density="compact">компактно</button>
+        <button class="chip ${density === "visual" ? "is-active" : ""}" type="button" data-drill-density="visual">Сетка</button>
+        <button class="chip ${density === "compact" ? "is-active" : ""}" type="button" data-drill-density="compact">Список</button>
       </div>
     </section>
-    <div class="drill-grid" id="drillGrid"></div>
+    <div class="drill-grid studio-drill-grid" id="drillGrid"></div>
   `;
   const grid = refs.arena.querySelector("#drillGrid");
 
@@ -1099,28 +1105,27 @@ export function renderPageDrills(refs, state, handlers) {
       const mastery = getDrillMastery(state, id);
       const isFavorite = favorites.has(id);
       return `
-        <button class="drill-card ${isFavorite ? "is-favorite" : ""}" type="button" data-mode="${id}" style="--i:${i}; --route-accent:${meta.accent}; --route-glow:${meta.glow}">
-          <div class="drill-card-sprite">
-            <img src="${visual.sprite}" alt="" loading="lazy" />
-            ${masteryBadge(mastery.tier)}
-          </div>
-          <div class="drill-card-content">
-            <div class="drill-card-content-top">
-              <span class="drill-card-code">${meta.code}</span>
-              <span class="drill-kicker">${meta.kicker}</span>
-              <span class="drill-fav-toggle ${isFavorite ? "is-on" : ""}" role="button" tabindex="0" data-favorite-mode="${id}" aria-label="${isFavorite ? "Убрать из избранного" : "Добавить в избранное"}">${isFavorite ? "★" : "☆"}</span>
+        <button class="drill-card studio-drill-card ${isFavorite ? "is-favorite" : ""}" type="button" data-mode="${id}" style="--i:${i}">
+          <div class="sdc-top">
+            <div class="sdc-ids">
+              <span class="sdc-code">${meta.code}</span>
+              <span class="sdc-kicker">${meta.kicker}</span>
             </div>
+            <span class="drill-fav-toggle ${isFavorite ? "is-on" : ""}" role="button" tabindex="0" data-favorite-mode="${id}" aria-label="${isFavorite ? "Убрать из избранного" : "Добавить в избранное"}">${isFavorite ? "★" : "☆"}</span>
+          </div>
+          <div class="sdc-body">
             <h4>${meta.title}</h4>
             <p class="drill-card-objective" title="${escapeHtml(meta.objective || '')}">${meta.objective || ""}</p>
           </div>
-          <div class="drill-card-right">
-            <div class="drill-card-chips">
-              <span class="drill-chip" data-tooltip="уровень адаптации">L${brief.level}</span>
-              <span class="drill-chip drill-chip-time" data-tooltip="оценка длительности раунда">~${getDrillDuration(id)}м</span>
+          <div class="sdc-foot">
+            <div class="sdc-pills">
+              <span class="sdc-lvl" data-tooltip="уровень адаптации">L${String(brief.level).padStart(2, "0")}</span>
+              <span class="sdc-time" data-tooltip="оценка длительности раунда">${getDrillDuration(id)}M</span>
+              ${mastery.tier ? masteryBadge(mastery.tier) : ""}
             </div>
-            <div class="drill-card-stats">
-              <span class="drill-card-meta">${brief.recentAccuracy ? brief.recentAccuracy + "%" : "новое"} · ${brief.rounds}р</span>
-              ${brief.rounds >= 1 ? `<span class="drill-card-detail-link" data-detail-mode="${id}" role="link" tabindex="0" title="Открыть детальную карточку">📊 детали</span>` : ""}
+            <div class="sdc-stats">
+              <span class="sdc-acc">${brief.recentAccuracy ? brief.recentAccuracy + "% · " + brief.rounds + "R" : "НОВЫЙ"}</span>
+              ${brief.rounds >= 1 ? `<span class="drill-card-detail-link sdc-detail" data-detail-mode="${id}" role="link" tabindex="0" title="Открыть детальную карточку">АНАЛИЗ ↗</span>` : `<span class="sdc-go">СТАРТ →</span>`}
             </div>
           </div>
         </button>

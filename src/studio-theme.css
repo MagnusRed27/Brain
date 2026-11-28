@@ -1311,3 +1311,578 @@ body::after {
   letter-spacing: 0.08em !important;
   padding: 2px 6px !important;
 }
+
+
+/* =========================================================================
+   STUDIO v2 — Scientific Drills Catalog, Progress Telemetry Cockpit,
+   Records, Stim Lab, Settings & Active Drill Arena / Debrief
+   ========================================================================= */
+
+/* --- Drills Library: Studio Lab Header ----------------------------------- */
+.studio-drills-head {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  margin-bottom: 18px !important;
+}
+
+.studio-drills-head::before,
+.studio-drills-head::after {
+  display: none !important;
+}
+
+.sdh-main {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sdh-main h3 {
+  font-family: var(--font-display) !important;
+  font-size: clamp(1.5rem, 2.3vw, 2.1rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.035em !important;
+  margin: 0 !important;
+  color: var(--text) !important;
+}
+
+.sdh-main p {
+  margin: 0 !important;
+  max-width: 56ch;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  color: var(--text-soft) !important;
+}
+
+.sdh-main .panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.sdh-side {
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.sdh-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--line);
+}
+
+.sdh-kpis > div {
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sdh-kpis > div:last-child {
+  border-right: none;
+}
+
+.sdh-kpis span {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sdh-kpis strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.sdh-quick {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sdh-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.sdh-quick-item {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.sdh-quick-item:last-child { border-bottom: none; }
+
+@media (hover: hover) {
+  .sdh-quick-item:hover { background: var(--surface-elev); }
+}
+
+.sdh-q-num {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.sdh-quick-item strong {
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdh-q-code {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+
+/* --- Drills Toolbar ------------------------------------------------------ */
+.studio-drills-bar {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 18px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+
+.studio-search {
+  flex: 1 1 260px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 10px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--bg) !important;
+}
+
+.studio-search svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  flex: 0 0 auto;
+}
+
+.studio-search input {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.84rem !important;
+  outline: none !important;
+}
+
+/* --- Precision Scientific Module Cards (23 Drills) ----------------------- */
+.studio-drill-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.studio-drill-grid[data-density="compact"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.studio-drill-card {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 18px 18px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-1) !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  min-height: 156px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease !important;
+}
+
+.studio-drill-card::before,
+.studio-drill-card::after {
+  display: none !important;
+}
+
+.studio-drill-card.is-favorite {
+  box-shadow: inset 3px 0 0 var(--accent) !important;
+}
+
+@media (hover: hover) {
+  .studio-drill-card:hover {
+    border-color: var(--text) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: var(--shadow-2) !important;
+  }
+  .studio-drill-card:hover .sdc-go {
+    color: var(--accent);
+  }
+}
+
+.sdc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sdc-ids {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sdc-code {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  flex: 0 0 auto;
+}
+
+.sdc-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-drill-card .drill-fav-toggle {
+  font-size: 0.95rem;
+  color: var(--subtle);
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.studio-drill-card .drill-fav-toggle.is-on {
+  color: var(--accent) !important;
+}
+
+.sdc-body h4 {
+  font-family: var(--font-display) !important;
+  font-size: 1.08rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 0 6px !important;
+  color: var(--text) !important;
+}
+
+.sdc-body .drill-card-objective {
+  margin: 0 !important;
+  font-size: 0.8rem !important;
+  line-height: 1.48 !important;
+  color: var(--muted) !important;
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  overflow: visible !important;
+}
+
+.sdc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.sdc-pills,
+.sdc-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sdc-lvl,
+.sdc-time {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.sdc-time {
+  color: var(--muted);
+}
+
+.sdc-acc {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.sdc-go,
+.sdc-detail {
+  font-family: var(--font-mono) !important;
+  font-size: 0.66rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  color: var(--text) !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Compact list mode */
+.studio-drill-grid[data-density="compact"] .studio-drill-card {
+  min-height: 0 !important;
+  padding: 12px 14px !important;
+  gap: 6px !important;
+}
+
+.studio-drill-grid[data-density="compact"] .drill-card-objective {
+  display: none !important;
+}
+
+/* --- Progress & Analytics Telemetry Cockpit ------------------------------ */
+.progress-grid,
+.progress-dashboard-v8 {
+  gap: 16px !important;
+}
+
+.progress-card,
+.progress-panel-v8,
+.progress-cockpit,
+.progress-cockpit-v8,
+.records-cockpit-v10,
+.coach-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-1) !important;
+  backdrop-filter: none !important;
+}
+
+.progress-cockpit::before,
+.progress-cockpit-v8::before,
+.records-cockpit-v10::before,
+.coach-card::before {
+  display: none !important;
+}
+
+.progress-kicker {
+  font-family: var(--font-mono) !important;
+  font-size: 0.64rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+}
+
+.progress-card h4,
+.coach-card h4,
+.records-cockpit-v10 h3 {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--text) !important;
+}
+
+.records-table {
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.records-row {
+  border-bottom: 1px solid var(--line) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.78rem !important;
+}
+
+.records-head {
+  background: var(--bg) !important;
+  font-size: 0.66rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: var(--muted) !important;
+}
+
+/* --- Active Drill Arena & Debrief Polish --------------------------------- */
+.task-shell,
+.intro-card,
+.result-panel {
+  border-radius: 12px !important;
+  border: 1px solid var(--line) !important;
+  background: var(--surface) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+
+.task-main::before,
+.result-art,
+.stim-hero-backdrop {
+  display: none !important;
+}
+
+.result-big-number {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.05em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.status-pill {
+  font-family: var(--font-mono) !important;
+  font-size: 0.66rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+}
+
+/* --- Settings Theme Cards Matching Paper / Atelier / Slate / Carbon ------ */
+.theme-card-v11[data-theme-preview="aurora"]   { --theme-accent: #e8451e; --theme-b: #f4f2ed; --theme-c: #111110; }
+.theme-card-v11[data-theme-preview="citrus"]   { --theme-accent: #c96a0b; --theme-b: #f6f1e4; --theme-c: #1c1712; }
+.theme-card-v11[data-theme-preview="tide"]     { --theme-accent: #1b4dff; --theme-b: #eef1f5; --theme-c: #0f172a; }
+.theme-card-v11[data-theme-preview="obsidian"] { --theme-accent: #ff5429; --theme-b: #131315; --theme-c: #f3f1ec; }
+
+.theme-card-scene::before {
+  display: none !important;
+}
+
+/* --- Responsive for Drills & Progress ------------------------------------ */
+@media (max-width: 1180px) {
+  .studio-drills-head {
+    grid-template-columns: 1fr !important;
+  }
+  .sdh-side {
+    border-left: none;
+    border-top: 1px solid var(--line);
+  }
+  .studio-drill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .studio-drill-grid,
+  .studio-drill-grid[data-density="compact"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Drills & Progress Alignment + Contrast Polish ----------------------- */
+.studio-drill-card {
+  align-items: stretch !important;
+  justify-content: space-between !important;
+}
+
+.studio-drill-card .sdc-top,
+.studio-drill-card .sdc-body,
+.studio-drill-card .sdc-foot {
+  width: 100% !important;
+  text-align: left !important;
+}
+
+.studio-drill-card .sdc-body {
+  flex: 1 1 auto;
+}
+
+.studio-drill-grid[data-density="compact"] .studio-drill-card {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 12px 16px !important;
+}
+
+.studio-drill-grid[data-density="compact"] .sdc-top {
+  width: auto !important;
+  flex: 0 0 auto;
+}
+
+.studio-drill-grid[data-density="compact"] .sdc-kicker,
+.studio-drill-grid[data-density="compact"] .drill-fav-toggle {
+  display: none !important;
+}
+
+.studio-drill-grid[data-density="compact"] .sdc-body {
+  width: auto !important;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.studio-drill-grid[data-density="compact"] .sdc-body h4 {
+  margin: 0 !important;
+  font-size: 0.96rem !important;
+}
+
+.studio-drill-grid[data-density="compact"] .sdc-foot {
+  width: auto !important;
+  flex: 0 0 auto;
+  padding-top: 0 !important;
+  border-top: none !important;
+  gap: 12px !important;
+}
+
+/* Progress high-contrast domain scores & coach score ring fit */
+.coach-score small {
+  font-size: 0.55rem !important;
+  letter-spacing: 0.02em !important;
+}
+
+.domain-row strong,
+.domain-bar-head strong,
+.domain-matrix-score {
+  color: var(--text) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 700 !important;
+}
